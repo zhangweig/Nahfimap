@@ -411,6 +411,8 @@
         z-index: 9999;
         display: flex; align-items: flex-end; justify-content: center; padding: 0;
     }
+    .modal-bg.map-edit { pointer-events: none; }
+    .modal-bg.map-edit .modal { pointer-events: auto; }
     @media(min-height:600px) { .modal-bg { align-items: center; padding: 20px; } }
     .modal {
         background: var(--bg-sidebar);
@@ -420,6 +422,7 @@
         width: 100%; max-width: 460px; max-height: 90vh;
         display: flex; flex-direction: column; overflow: hidden;
         animation: slideUp .28s cubic-bezier(.4,0,.2,1);
+        pointer-events: auto;
     }
     @media(min-height:600px) { .modal { border-radius: var(--r-xl); } }
     @keyframes slideUp {
@@ -573,7 +576,8 @@
         border-left: 0.5px solid var(--sep);
         box-shadow: -4px 0 24px rgba(0,0,0,.1);
         transform: translateX(100%);
-        transition: transform .32s cubic-bezier(.4,0,.2,1);
+        transition: transform .38s cubic-bezier(.22,.61,.36,1), box-shadow .38s ease;
+        will-change: transform;
     }
     .detail-panel.open { transform: translateX(0); }
     .dp-hero {
@@ -1909,7 +1913,7 @@
     </div>
 
     <!-- ═══ Add/Edit Place Modal ═══ -->
-    <div v-if="showModal" class="modal-bg" @click.self="showModal=false">
+    <div v-if="showModal" class="modal-bg" :class="{'map-edit':editId}" @click.self="showModal=false">
         <div class="modal">
             <div class="modal-hd">
                 <span class="modal-hd-title">{{ editId ? '编辑足迹' : '添加足迹' }}</span>
@@ -2394,7 +2398,7 @@ createApp({
 
         /* ── Map ── */
         const initMap=()=>{
-            mapObj.value=L.map('map',{zoomControl:true,doubleClickZoom:false,zoomAnimation:true,fadeAnimation:true,markerZoomAnimation:false,preferCanvas:true}).setView([31,103.5],5);
+            mapObj.value=L.map('map',{zoomControl:true,doubleClickZoom:false,zoomAnimation:true,fadeAnimation:true,markerZoomAnimation:true,preferCanvas:true}).setView([31,103.5],5);
             tileLay=L.tileLayer(tiles[0].url,tiles[0].options).addTo(mapObj.value);
             clusterGrp=L.layerGroup().addTo(mapObj.value);
             tracksGrp=L.layerGroup().addTo(mapObj.value);
@@ -2404,7 +2408,7 @@ createApp({
                 if(isGcj.value)[lat,lng]=GCJ.gcj2wgs(lat,lng);
                 ctx.value={show:true,x:e.containerPoint.x+4,y:e.containerPoint.y+4,lat,lng};
             });
-            mapObj.value.on('click',()=>{ctx.value.show=false;});
+            mapObj.value.on('click',()=>{ctx.value.show=false;detailPlace.value=null;});
         };
 
         const switchTile=(t)=>{
@@ -2433,6 +2437,29 @@ createApp({
             if(isGcj.value){const[g1,g2]=GCJ.wgs2gcj(wLat,wLng);return[g1,g2];}
             return[wLat,wLng];
         };
+        const mapLatLngToStored=(latlng)=>{
+            let lat=latlng.lat,lng=latlng.lng;
+            if(isGcj.value)[lat,lng]=GCJ.gcj2wgs(lat,lng);
+            return{lat,lng};
+        };
+        const updatePlaceLocation=async(place,latlng,persist=false)=>{
+            const {lat,lng}=mapLatLngToStored(latlng);
+            place.lat=lat;place.lng=lng;
+            if(editId.value===place.id){
+                form.value.latStr=lat.toFixed(6);
+                form.value.lngStr=lng.toFixed(6);
+            }
+            if(detailPlace.value?.id===place.id){
+                detailPlace.value={...detailPlace.value,lat,lng};
+            }
+            if(heatOn.value) refreshHeat();
+            if(!persist)return;
+            const saved=places.value.find(p=>p.id===place.id);
+            if(saved){
+                saved.lat=lat;saved.lng=lng;
+                await dbObj.value.places.put({...saved});
+            }
+        };
 
         const buildMarker=(place)=>{
             const ll=markerLatLng(place);
@@ -2455,8 +2482,21 @@ createApp({
                     `</div>`;
             }
             const icon=L.divIcon({html,className:'nahfi-pin',iconSize:[44,48],iconAnchor:[22,48],popupAnchor:[0,-50]});
-            const mk=L.marker(ll,{icon,draggable:false});
+            const editable=showModal.value&&editId.value===place.id;
+            const mk=L.marker(ll,{icon,draggable:editable,bubblingMouseEvents:false});
             mk.bindPopup(()=>buildPopup(place),{maxWidth:240,minWidth:240,closeButton:true});
+            mk.on('click',()=>{
+                ctx.value.show=false;
+                detailPlace.value=place;
+                dpPhotoIdx.value=0;
+            });
+            mk.on('dragstart',()=>{ctx.value.show=false;mapObj.value.closePopup();});
+            mk.on('drag',e=>{if(showModal.value&&editId.value===place.id)updatePlaceLocation(place,e.target.getLatLng(),false);});
+            mk.on('dragend',async e=>{
+                if(!(showModal.value&&editId.value===place.id))return;
+                try{await updatePlaceLocation(place,e.target.getLatLng(),true);showToast('📍 位置已更新');}
+                catch(err){console.error(err);showToast('❌ 位置保存失败: '+err.message);}
+            });
             // 双击标记点 → 丝滑放大聚焦到 16 级
             mk.on('dblclick',()=>{
                 mapObj.value.flyTo(ll,16,{duration:0.8,animate:true});
@@ -2500,6 +2540,7 @@ createApp({
             clusterGrp.clearLayers();markerMap.clear();
             places.value.forEach(p=>{const mk=buildMarker(p);if(mk){markerMap.set(p.id,mk);clusterGrp.addLayer(mk);}});
         };
+        watch([showModal,editId],()=>{if(mapObj.value)refreshMarkers();});
 
         /* ── Heat layer ── */
         const refreshHeat=()=>{
@@ -2713,10 +2754,62 @@ createApp({
             });
         };
 
+        const walkGeoCoords=(geom,handlers)=>{
+            if(!geom)return;
+            if(geom.type==='Point')handlers.point?.(geom.coordinates);
+            else if(geom.type==='MultiPoint')geom.coordinates.forEach(c=>handlers.point?.(c));
+            else if(geom.type==='LineString')handlers.line?.(geom.coordinates);
+            else if(geom.type==='MultiLineString')geom.coordinates.forEach(l=>handlers.line?.(l));
+            else if(geom.type==='GeometryCollection')geom.geometries.forEach(g=>walkGeoCoords(g,handlers));
+        };
+        const hasRouteGeometry=(geo)=>geo.features.some(f=>{
+            let has=false;
+            walkGeoCoords(f.geometry,{line:coords=>{if(coords.length>1)has=true;}});
+            return has||['Polygon','MultiPolygon'].includes(f.geometry?.type);
+        });
+        const normalizeImportDate=(value)=>{
+            if(!value)return'';
+            const d=new Date(value);
+            if(!isNaN(d.getTime()))return d.toISOString().split('T')[0];
+            const m=String(value).match(/\d{4}-\d{2}-\d{2}/);
+            return m?m[0]:'';
+        };
+        const stripHtml=(value)=>value?String(value).replace(/<[^>]*>/g,'').trim():'';
+        const importPointPlaces=async(geo,fallbackName)=>{
+            const items=[];
+            geo.features.forEach(feature=>{
+                const props=feature.properties||{};
+                walkGeoCoords(feature.geometry,{
+                    point:coord=>{
+                        if(!Array.isArray(coord)||coord.length<2)return;
+                        items.push({
+                            title:stripHtml(props.name)||`${fallbackName}-${items.length+1}`,
+                            category:cats[0],
+                            date:normalizeImportDate(props.time||props.timestamp||props.begin||props.end),
+                            lat:Number(coord[1]),
+                            lng:Number(coord[0]),
+                            photos:[],
+                            notes:stripHtml(props.description||props.desc||props.comment||''),
+                            difficulty:'',
+                            rating:0,
+                            journeyId:null
+                        });
+                    }
+                });
+            });
+            if(!items.length)return 0;
+            for(const item of items)await dbObj.value.places.add(item);
+            await loadPlaces();
+            focusPlaces(places.value.slice(-items.length));
+            sbTab.value='places';
+            routePanelOpen.value=false;
+            return items.length;
+        };
+
         const importTrack=(e)=>{
             const file=e.target.files[0];if(!file)return;
             const reader=new FileReader();
-            reader.onload=ev=>{
+            reader.onload=async ev=>{
                 try{
                     const parser=new DOMParser();
                     const xml=parser.parseFromString(ev.target.result,'text/xml');
@@ -2724,9 +2817,15 @@ createApp({
                     const isKml=file.name.toLowerCase().endsWith('.kml')||xml.getElementsByTagName('kml').length>0;
                     const geo=isKml?toGeoJSON.kml(xml):toGeoJSON.gpx(xml);
                     if(!geo?.features?.length){showToast('⚠️ 文件中没有路线数据');return;}
+                    const baseName=file.name.replace(/\.(kml|gpx)$/i,'');
+                    if(!hasRouteGeometry(geo)){
+                        const count=await importPointPlaces(geo,baseName);
+                        showToast(count?`✅ 已导入 ${count} 个足迹点`:'⚠️ 文件中没有可导入的点');
+                        return;
+                    }
 
                     // Parse stats before coordinate conversion (WGS-84 altitudes valid)
-                    const info=parseTrackInfo(geo,file.name.replace(/\.(kml|gpx)$/i,''));
+                    const info=parseTrackInfo(geo,baseName);
                     const geoLayer=buildTrackLayer(geo);
                     geoLayer.addTo(tracksGrp);
                     try{const b=geoLayer.getBounds();if(b.isValid())mapObj.value.fitBounds(b,{padding:[60,60],maxZoom:14});}catch(_){}
