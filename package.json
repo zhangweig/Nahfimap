@@ -1,0 +1,11 @@
+{
+  "name": "nahfimap",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "deploy": "wrangler pages deploy . --project-name nahfimap --branch main"
+  },
+  "devDependencies": {
+    "wrangler": "latest"
+  }
+}
