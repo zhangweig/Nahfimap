@@ -2,8 +2,8 @@
  * NahfiMap Service Worker
  * 策略：Cache First（核心资源） + Network First（地图瓦片）
  */
-const CACHE_VERSION = 'nahfimap-v5';
-const TILE_CACHE    = 'nahfimap-tiles-v5';
+const CACHE_VERSION = 'nahfimap-v6';
+const TILE_CACHE    = 'nahfimap-tiles-v6';
 
 // 核心静态资源 - 离线时从缓存读取
 const CORE_ASSETS = [
@@ -76,9 +76,9 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // 3. 本地资源 → Cache First，回退到网络
+  // 3. 本地资源 → Network First，避免 PWA 长时间卡住旧页面
   if (url.origin === self.location.origin || e.request.url.startsWith('file://')) {
-    e.respondWith(cacheFirst(e.request, CACHE_VERSION));
+    e.respondWith(networkFirst(e.request, CACHE_VERSION));
     return;
   }
 
@@ -112,6 +112,26 @@ async function cacheFirst(request, cacheName) {
       });
     }
     return new Response('', { status: 200, headers: { 'Content-Type': 'text/plain' } });
+  }
+}
+
+/** Network First: 优先拿最新版，离线时回退缓存 */
+async function networkFirst(request, cacheName) {
+  const cache = await caches.open(cacheName);
+  try {
+    const response = await fetch(request);
+    if (response.ok && request.method === 'GET') {
+      cache.put(request, response.clone());
+    }
+    return response;
+  } catch (err) {
+    const cached = await cache.match(request);
+    if (cached) return cached;
+    if (request.mode === 'navigate') {
+      const fallback = await cache.match('./index.html');
+      if (fallback) return fallback;
+    }
+    return new Response('', { status: 503 });
   }
 }
 
