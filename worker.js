@@ -42,23 +42,13 @@ export default {
     const method = request.method;
 
     // ── 初始化表（首次请求自动建表）──
-    try {
-      await env.DB.exec(`
-        CREATE TABLE IF NOT EXISTS places (
-          id         TEXT PRIMARY KEY,
-          data       TEXT NOT NULL,
-          updated_at INTEGER NOT NULL DEFAULT 0,
-          deleted    INTEGER NOT NULL DEFAULT 0
-        );
-        CREATE TABLE IF NOT EXISTS journeys (
-          id         TEXT PRIMARY KEY,
-          data       TEXT NOT NULL,
-          updated_at INTEGER NOT NULL DEFAULT 0,
-          deleted    INTEGER NOT NULL DEFAULT 0
-        );
-      `);
-    } catch (e) {
-      // 表已存在，忽略
+    // 注意：D1 的 exec() 不支持多语句，需逐条执行
+    const createTables = [
+      `CREATE TABLE IF NOT EXISTS places (id TEXT PRIMARY KEY, data TEXT NOT NULL, updated_at INTEGER NOT NULL DEFAULT 0, deleted INTEGER NOT NULL DEFAULT 0)`,
+      `CREATE TABLE IF NOT EXISTS journeys (id TEXT PRIMARY KEY, data TEXT NOT NULL, updated_at INTEGER NOT NULL DEFAULT 0, deleted INTEGER NOT NULL DEFAULT 0)`,
+    ];
+    for (const sql of createTables) {
+      try { await env.DB.exec(sql); } catch (e) { /* 表已存在，忽略 */ }
     }
 
     // ════ ROUTES ════
