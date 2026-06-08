@@ -140,6 +140,31 @@
         margin-top: 7px; line-height: 1.5;
     }
     .sync-tip a { color: var(--c-blue); text-decoration: none; font-weight: 500; cursor: pointer; }
+
+    /* ── 云同步按钮 ── */
+    .btn-sync {
+        background: rgba(63,127,97,.10);
+        border: 1px solid rgba(63,127,97,.25);
+        color: var(--c-green);
+        font-size: 12px;
+        font-weight: 600;
+        transition: background .2s, color .2s, opacity .2s;
+    }
+    .btn-sync:hover { background: rgba(63,127,97,.18); }
+    .btn-sync:disabled { opacity: .55; cursor: not-allowed; }
+    .sync-icon { font-size: 14px; line-height: 1; }
+    .sync-syncing { animation: spin .9s linear infinite; display:inline-block; }
+    .sync-ok  { color: #3DBB7D; }
+    .sync-err { color: var(--c-red); }
+
+    /* 移动端底部导航同步按钮状态 */
+    .mob-nav-btn.sync-ok   { color: #3DBB7D; }
+    .mob-nav-btn.sync-err  { color: var(--c-red); }
+    .mob-nav-btn.syncing   { color: var(--c-green); }
+    .mob-sync-icon { font-size: 20px; }
+    .mob-nav-btn.syncing .mob-sync-icon { display:inline-block; animation: spin .9s linear infinite; }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
     /* 导入确认弹窗 */
     .import-confirm-bg {
         position: fixed; inset: 0; background: rgba(0,0,0,.4);
@@ -1882,7 +1907,14 @@
                     <label>⬆ 导入备份<input type="file" accept=".json" @change="prepareImport" style="display:none"></label>
                 </div>
             </div>
-            <div class="sync-tip">换电脑前先「导出备份」，新设备上「导入备份」即可恢复所有数据</div>
+            <!-- 云同步按钮 -->
+            <button class="btn btn-sync btn-sm" @click="syncCloud" :disabled="syncStatus==='syncing'" style="width:100%;margin-top:6px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;gap:6px;">
+                <span class="sync-icon" :class="'sync-'+syncStatus">
+                    {{ syncStatus==='syncing'?'⟳':syncStatus==='ok'?'✓':syncStatus==='err'?'⚠':'☁' }}
+                </span>
+                <span>{{ syncStatus==='syncing'?'同步中…':syncStatus==='ok'?'同步完成':syncStatus==='err'?'同步失败':'云端同步' }}</span>
+                <span v-if="lastSyncTs>0" style="margin-left:auto;opacity:.5;font-size:9px">{{ new Date(lastSyncTs).toLocaleTimeString('zh',{hour:'2-digit',minute:'2-digit'}) }}</span>
+            </button>
         </div>
     </div>
 
@@ -2207,8 +2239,12 @@
         <button class="mob-nav-btn" :class="{active: mobTab==='tracks'}" @click="mobTab='tracks'; sbTab='routes'; sidebarOpen=true">
             🛤️<span>路线</span>
         </button>
-        <button class="mob-nav-btn" @click="openAdd(null)">
+        <button class="mob-nav-btn mob-nav-add" @click="openAdd(null)">
             ➕<span>添加</span>
+        </button>
+        <button class="mob-nav-btn mob-nav-sync" :class="{'sync-ok':syncStatus==='ok','sync-err':syncStatus==='err','syncing':syncStatus==='syncing'}" @click="syncCloud">
+            <span class="mob-sync-icon">{{ syncStatus==='syncing'?'⟳':syncStatus==='ok'?'✓':syncStatus==='err'?'⚠':'☁' }}</span>
+            <span>同步</span>
         </button>
     </nav>
 </div>
@@ -2390,9 +2426,19 @@ createApp({
         /* ── DB ── */
         const initDB=()=>{
             dbObj.value=new Dexie('NahfiMapDB_v3');
+            // version 1: 原始 schema
             dbObj.value.version(1).stores({
                 places:'++id,title,category,date,journeyId',
                 journeys:'++id,name'
+            });
+            // version 2: 添加 updatedAt 字段（云同步增量标识）
+            dbObj.value.version(2).stores({
+                places:'++id,title,category,date,journeyId,updatedAt',
+                journeys:'++id,name,updatedAt'
+            }).upgrade(tx=>{
+                const now=Date.now();
+                tx.places.toCollection().modify(p=>{if(!p.updatedAt)p.updatedAt=now;});
+                tx.journeys.toCollection().modify(j=>{if(!j.updatedAt)j.updatedAt=now;});
             });
         };
 
@@ -2575,7 +2621,8 @@ createApp({
             const data={title,category:form.value.category,date:form.value.date,lat,lng,
                 photos:[...form.value.photos],notes:form.value.notes,
                 difficulty:form.value.difficulty,rating:form.value.rating,
-                journeyId:form.value.journeyId||null};
+                journeyId:form.value.journeyId||null,
+                updatedAt:Date.now()};
             try{
                 if(editId.value){data.id=editId.value;await dbObj.value.places.put(data);showToast('✅ 修改已保存');}
                 else{await dbObj.value.places.add(data);showToast('✅ 足迹已添加');}
@@ -2619,7 +2666,7 @@ createApp({
         };
         const saveJourney=async()=>{
             const name=jForm.value.name.trim();if(!name)return;
-            const data={name,dateFrom:jForm.value.dateFrom,dateTo:jForm.value.dateTo,desc:jForm.value.desc,color:jForm.value.color};
+            const data={name,dateFrom:jForm.value.dateFrom,dateTo:jForm.value.dateTo,desc:jForm.value.desc,color:jForm.value.color,updatedAt:Date.now()};
             try{
                 if(editJourneyId.value){data.id=editJourneyId.value;await dbObj.value.journeys.put(data);showToast('✅ 旅程已更新');}
                 else{await dbObj.value.journeys.add(data);showToast('✅ 旅程已创建');}
@@ -2949,6 +2996,102 @@ createApp({
             setTimeout(()=>{if(mapObj.value)mapObj.value.invalidateSize();},350);
         };
 
+        /* ── Cloud Sync (Cloudflare D1) ── */
+        const CLOUD_API_URL = 'https://nahfimap-api.nahfimap.workers.dev';
+
+        const syncStatus = ref('idle');  // 'idle' | 'syncing' | 'ok' | 'err'
+        const lastSyncTs = ref(parseInt(localStorage.getItem('nahfimap_last_sync')||'0',10));
+
+        const syncCloud = async () => {
+            if (!CLOUD_API_URL) { showToast('⚠️ 请先配置 Worker URL'); return; }
+            if (syncStatus.value === 'syncing') return;
+            syncStatus.value = 'syncing';
+            try {
+                const since = lastSyncTs.value;
+
+                /* ══ 1. 拉取服务端增量数据 ══ */
+                const [plRes, jRes] = await Promise.all([
+                    fetch(`${CLOUD_API_URL}/api/places?since=${since}`).then(r=>r.json()),
+                    fetch(`${CLOUD_API_URL}/api/journeys?since=${since}`).then(r=>r.json()),
+                ]);
+                if (!plRes.ok || !jRes.ok) throw new Error('拉取失败');
+
+                /* ══ 2. 将服务端变更写入本地（仅当服务端更新时间更新时覆盖）══ */
+                const serverPlaces = plRes.places || [];
+                const serverJourneys = jRes.journeys || [];
+
+                for (const sp of serverPlaces) {
+                    if (sp._deleted) {
+                        await dbObj.value.places.delete(sp.id);
+                    } else {
+                        const local = await dbObj.value.places.get(sp.id);
+                        if (!local || (sp.updatedAt||0) > (local.updatedAt||0)) {
+                            const { _deleted, ...rest } = sp;
+                            await dbObj.value.places.put(rest);
+                        }
+                    }
+                }
+                for (const sj of serverJourneys) {
+                    if (sj._deleted) {
+                        await dbObj.value.journeys.delete(sj.id);
+                    } else {
+                        const local = await dbObj.value.journeys.get(sj.id);
+                        if (!local || (sj.updatedAt||0) > (local.updatedAt||0)) {
+                            const { _deleted, ...rest } = sj;
+                            await dbObj.value.journeys.put(rest);
+                        }
+                    }
+                }
+
+                /* ══ 3. 推送本地增量数据到服务端 ══ */
+                const localPlaces = since > 0
+                    ? (await dbObj.value.places.where('updatedAt').above(since).toArray())
+                    : (await dbObj.value.places.toArray());
+                const localJourneys = since > 0
+                    ? (await dbObj.value.journeys.where('updatedAt').above(since).toArray())
+                    : (await dbObj.value.journeys.toArray());
+
+                // 为没有 updatedAt 的旧数据补上时间戳
+                const now = Date.now();
+                const toUploadPlaces = localPlaces.map(p => ({ ...p, updatedAt: p.updatedAt || now }));
+                const toUploadJourneys = localJourneys.map(j => ({ ...j, updatedAt: j.updatedAt || now }));
+
+                if (toUploadPlaces.length) {
+                    const r = await fetch(`${CLOUD_API_URL}/api/places/push`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ places: toUploadPlaces }),
+                    }).then(r => r.json());
+                    if (!r.ok) throw new Error('推送地点失败');
+                }
+                if (toUploadJourneys.length) {
+                    const r = await fetch(`${CLOUD_API_URL}/api/journeys/push`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ journeys: toUploadJourneys }),
+                    }).then(r => r.json());
+                    if (!r.ok) throw new Error('推送旅程失败');
+                }
+
+                /* ══ 4. 更新本地时间戳 + 刷新视图 ══ */
+                const newTs = Math.max(plRes.serverTs || now, jRes.serverTs || now);
+                lastSyncTs.value = newTs;
+                localStorage.setItem('nahfimap_last_sync', String(newTs));
+
+                await loadPlaces();
+                await loadJourneys();
+                syncStatus.value = 'ok';
+                showToast(`✅ 同步完成，共 ${places.value.length} 个足迹`);
+                setTimeout(() => { syncStatus.value = 'idle'; }, 3000);
+
+            } catch (e) {
+                console.error('[NahfiMap Sync]', e);
+                syncStatus.value = 'err';
+                showToast('❌ 同步失败：' + e.message);
+                setTimeout(() => { syncStatus.value = 'idle'; }, 4000);
+            }
+        };
+
         onMounted(()=>{initDB();initMap();loadPlaces();loadJourneys();});
 
         return{
@@ -2966,6 +3109,7 @@ createApp({
             ivOpen,ivPrev,ivNext,
             importTrack,selectTrack,removeTrack,clearTracks,exportBackup,prepareImport,importConfirm,doImport,
             switchTile,toggleHeat,backToMap,
+            syncStatus,lastSyncTs,syncCloud,
         };
     }
 }).mount('#app');

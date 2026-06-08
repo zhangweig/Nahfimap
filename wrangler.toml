@@ -1,0 +1,21 @@
+name            = "nahfimap-api"
+main            = "worker.js"
+compatibility_date = "2024-06-01"
+
+# ── D1 数据库绑定 ──
+# 创建步骤：
+#   1. npx wrangler d1 create nahfimap
+#   2. 将输出的 database_id 填入下方
+[[d1_databases]]
+binding       = "DB"
+database_name = "nahfimap"
+database_id   = "d87992cc-1ac5-442b-9cd2-a26f557e23cb"
+
+# ── 部署说明 ──
+# 1. 安装 wrangler:   npm install -g wrangler
+# 2. 登录:            npx wrangler login
+# 3. 创建 D1 数据库:  npx wrangler d1 create nahfimap
+# 4. 将 database_id 填入上方
+# 5. 部署 Worker:     npx wrangler deploy
+# 6. 获得 Worker URL: https://nahfimap-api.<your-account>.workers.dev
+# 7. 将 Worker URL 填入 index.html 的 CLOUD_API_URL 常量
