@@ -165,6 +165,41 @@
     .mob-nav-btn.syncing .mob-sync-icon { display:inline-block; animation: spin .9s linear infinite; }
 
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── 登录/注册弹窗 ── */
+    .auth-modal {
+        background: var(--bg-card);
+        backdrop-filter: blur(24px);
+        border-radius: 20px;
+        padding: 32px 28px 24px;
+        width: min(360px, 90vw);
+        position: relative;
+        box-shadow: 0 20px 60px rgba(0,0,0,.15);
+    }
+    .auth-logo { font-size: 28px; font-weight: 700; text-align: center; color: var(--c-forest); }
+    .auth-subtitle { font-size: 12px; text-align: center; color: var(--t4); margin-top: 4px; margin-bottom: 20px; }
+    .auth-tabs { display: flex; gap: 0; background: rgba(0,0,0,.06); border-radius: 10px; margin-bottom: 20px; overflow: hidden; }
+    .auth-tab {
+        flex: 1; padding: 8px 0; text-align: center; font-size: 13px; font-weight: 600;
+        background: none; border: none; cursor: pointer; color: var(--t3); transition: all .2s;
+    }
+    .auth-tab.on { background: var(--c-green); color: #fff; }
+    .auth-field { margin-bottom: 14px; }
+    .auth-field label { display: block; font-size: 11px; font-weight: 600; color: var(--t3); margin-bottom: 4px; }
+    .auth-field input {
+        width: 100%; padding: 10px 12px; border-radius: 10px;
+        border: 1px solid rgba(0,0,0,.12); background: rgba(255,255,255,.6);
+        font-size: 14px; outline: none; transition: border .2s;
+    }
+    .auth-field input:focus { border-color: var(--c-green); }
+    .auth-btn {
+        width: 100%; padding: 11px; margin-top: 6px; border-radius: 12px;
+        background: var(--c-green); color: #fff; font-size: 14px; font-weight: 600;
+        border: none; cursor: pointer; transition: opacity .2s;
+    }
+    .auth-btn:hover { opacity: .9; }
+    .auth-btn:disabled { opacity: .5; cursor: not-allowed; }
+    .auth-hint { text-align: center; font-size: 11px; color: var(--t4); margin-top: 14px; }
     /* 导入确认弹窗 */
     .import-confirm-bg {
         position: fixed; inset: 0; background: rgba(0,0,0,.4);
@@ -1907,14 +1942,26 @@
                     <label>⬆ 导入备份<input type="file" accept=".json" @change="prepareImport" style="display:none"></label>
                 </div>
             </div>
-            <!-- 云同步按钮 -->
-            <button class="btn btn-sync btn-sm" @click="syncCloud" :disabled="syncStatus==='syncing'" style="width:100%;margin-top:6px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;gap:6px;">
-                <span class="sync-icon" :class="'sync-'+syncStatus">
-                    {{ syncStatus==='syncing'?'⟳':syncStatus==='ok'?'✓':syncStatus==='err'?'⚠':'☁' }}
-                </span>
-                <span>{{ syncStatus==='syncing'?'同步中…':syncStatus==='ok'?'同步完成':syncStatus==='err'?'同步失败':'云端同步' }}</span>
-                <span v-if="lastSyncTs>0" style="margin-left:auto;opacity:.5;font-size:9px">{{ new Date(lastSyncTs).toLocaleTimeString('zh',{hour:'2-digit',minute:'2-digit'}) }}</span>
-            </button>
+            <!-- 云同步区域 -->
+            <template v-if="isLoggedIn">
+                <div class="auth-info" style="margin-top:6px;font-size:11px;color:var(--t3);display:flex;align-items:center;gap:6px;justify-content:center;">
+                    <span>👤 {{ authUser?.name }}</span>
+                    <button class="btn-logout" @click="doLogout" style="font-size:10px;color:var(--c-red);cursor:pointer;background:none;border:none;padding:2px 4px;">退出</button>
+                </div>
+                <button class="btn btn-sync btn-sm" @click="syncCloud" :disabled="syncStatus==='syncing'" style="width:100%;margin-top:4px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;gap:6px;">
+                    <span class="sync-icon" :class="'sync-'+syncStatus">
+                        {{ syncStatus==='syncing'?'⟳':syncStatus==='ok'?'✓':syncStatus==='err'?'⚠':'☁' }}
+                    </span>
+                    <span>{{ syncStatus==='syncing'?'同步中…':syncStatus==='ok'?'同步完成':syncStatus==='err'?'同步失败':'云端同步' }}</span>
+                    <span v-if="lastSyncTs>0" style="margin-left:auto;opacity:.5;font-size:9px">{{ new Date(lastSyncTs).toLocaleTimeString('zh',{hour:'2-digit',minute:'2-digit'}) }}</span>
+                </button>
+            </template>
+            <template v-else>
+                <button class="btn btn-sync btn-sm" @click="showAuthModal=true" style="width:100%;margin-top:6px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;gap:6px;">
+                    <span class="sync-icon">🔐</span>
+                    <span>登录云同步</span>
+                </button>
+            </template>
         </div>
     </div>
 
@@ -2225,6 +2272,48 @@
     <!-- Toast -->
     <div class="toast" :class="{show:toast.show}">{{ toast.msg }}</div>
 
+    <!-- ═══ Auth Modal (Login / Register) ═══ -->
+    <div v-if="showAuthModal" class="modal-bg" @click.self="showAuthModal=false">
+        <div class="auth-modal">
+            <button class="modal-x" @click="showAuthModal=false">✕</button>
+            <div class="auth-logo">🏔️ NahfiMap</div>
+            <div class="auth-subtitle">户外足迹 · 云端同步</div>
+
+            <!-- Tab 切换 -->
+            <div class="auth-tabs">
+                <button class="auth-tab" :class="{on:authTab==='login'}" @click="authTab='login'">登录</button>
+                <button class="auth-tab" :class="{on:authTab==='register'}" @click="authTab='register'">注册</button>
+            </div>
+
+            <!-- 表单 -->
+            <div class="auth-form">
+                <div v-if="authTab==='register'" class="auth-field">
+                    <label>昵称</label>
+                    <input v-model="authForm.name" type="text" placeholder="你的昵称" @keyup.enter="doRegister">
+                </div>
+                <div class="auth-field">
+                    <label>邮箱</label>
+                    <input v-model="authForm.email" type="email" placeholder="email@example.com" @keyup.enter="authTab==='login'?doLogin():doRegister()">
+                </div>
+                <div class="auth-field">
+                    <label>密码</label>
+                    <input v-model="authForm.password" type="password" placeholder="至少 6 位" @keyup.enter="authTab==='login'?doLogin():doRegister()">
+                </div>
+
+                <button v-if="authTab==='login'" class="btn auth-btn" :disabled="authLoading" @click="doLogin">
+                    {{ authLoading?'登录中…':'登录' }}
+                </button>
+                <button v-else class="btn auth-btn" :disabled="authLoading" @click="doRegister">
+                    {{ authLoading?'注册中…':'注册' }}
+                </button>
+            </div>
+
+            <div class="auth-hint">
+                {{ authTab==='login'?'没有账号？点击上方「注册」':'已有账号？点击上方「登录」' }}
+            </div>
+        </div>
+    </div>
+
     <!-- Mobile Bottom Nav (only visible on mobile) -->
     <nav class="mob-nav">
         <button class="mob-nav-btn" :class="{active: mobTab==='map'}" @click="backToMap">
@@ -2242,9 +2331,9 @@
         <button class="mob-nav-btn mob-nav-add" @click="openAdd(null)">
             ➕<span>添加</span>
         </button>
-        <button class="mob-nav-btn mob-nav-sync" :class="{'sync-ok':syncStatus==='ok','sync-err':syncStatus==='err','syncing':syncStatus==='syncing'}" @click="syncCloud">
-            <span class="mob-sync-icon">{{ syncStatus==='syncing'?'⟳':syncStatus==='ok'?'✓':syncStatus==='err'?'⚠':'☁' }}</span>
-            <span>同步</span>
+        <button class="mob-nav-btn mob-nav-sync" :class="{'sync-ok':syncStatus==='ok','sync-err':syncStatus==='err','syncing':syncStatus==='syncing'}" @click="isLoggedIn?syncCloud():showAuthModal=true">
+            <span class="mob-sync-icon">{{ isLoggedIn?(syncStatus==='syncing'?'⟳':syncStatus==='ok'?'✓':syncStatus==='err'?'⚠':'☁'):'🔐' }}</span>
+            <span>{{ isLoggedIn?'同步':'登录' }}</span>
         </button>
     </nav>
 </div>
@@ -2439,6 +2528,11 @@ createApp({
                 const now=Date.now();
                 tx.places.toCollection().modify(p=>{if(!p.updatedAt)p.updatedAt=now;});
                 tx.journeys.toCollection().modify(j=>{if(!j.updatedAt)j.updatedAt=now;});
+            });
+            // version 3: 确保 updatedAt 索引已创建（解决旧浏览器升级阻塞问题）
+            dbObj.value.version(3).stores({
+                places:'++id,title,category,date,journeyId,updatedAt',
+                journeys:'++id,name,updatedAt'
             });
         };
 
@@ -2996,14 +3090,90 @@ createApp({
             setTimeout(()=>{if(mapObj.value)mapObj.value.invalidateSize();},350);
         };
 
-        /* ── Cloud Sync (Cloudflare D1) ── */
+        /* ── Cloud Sync (Cloudflare D1) + Auth ── */
         const CLOUD_API_URL = 'https://nahfimap-api.nahfimap.workers.dev';
 
+        // ── Auth state ──
+        const authToken = ref(localStorage.getItem('nahfimap_token') || '');
+        const authUser = ref(JSON.parse(localStorage.getItem('nahfimap_user') || 'null'));
+        const showAuthModal = ref(false);  // 登录/注册弹窗
+        const authTab = ref('login');      // 'login' | 'register'
+        const authForm = reactive({ email:'', password:'', name:'' });
+        const authLoading = ref(false);
+
+        const isLoggedIn = computed(() => !!authToken.value && !!authUser.value);
+
+        // 认证请求头
+        const authHeaders = () => ({
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken.value}`,
+        });
+
+        // 注册
+        const doRegister = async () => {
+            if (!authForm.email || !authForm.password || !authForm.name) {
+                showToast('⚠️ 请填写所有字段'); return;
+            }
+            if (authForm.password.length < 6) { showToast('⚠️ 密码至少 6 位'); return; }
+            authLoading.value = true;
+            try {
+                const r = await fetch(`${CLOUD_API_URL}/api/auth/register`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: authForm.email, password: authForm.password, name: authForm.name }),
+                }).then(r => r.json());
+                if (!r.ok) throw new Error(r.error);
+                authToken.value = r.token;
+                authUser.value = r.user;
+                localStorage.setItem('nahfimap_token', r.token);
+                localStorage.setItem('nahfimap_user', JSON.stringify(r.user));
+                showAuthModal.value = false;
+                showToast(`✅ 注册成功，欢迎 ${r.user.name}！`);
+            } catch (e) {
+                showToast('❌ 注册失败：' + e.message);
+            } finally { authLoading.value = false; }
+        };
+
+        // 登录
+        const doLogin = async () => {
+            if (!authForm.email || !authForm.password) {
+                showToast('⚠️ 请输入邮箱和密码'); return;
+            }
+            authLoading.value = true;
+            try {
+                const r = await fetch(`${CLOUD_API_URL}/api/auth/login`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: authForm.email, password: authForm.password }),
+                }).then(r => r.json());
+                if (!r.ok) throw new Error(r.error);
+                authToken.value = r.token;
+                authUser.value = r.user;
+                localStorage.setItem('nahfimap_token', r.token);
+                localStorage.setItem('nahfimap_user', JSON.stringify(r.user));
+                showAuthModal.value = false;
+                showToast(`✅ 登录成功，欢迎回来 ${r.user.name}！`);
+            } catch (e) {
+                showToast('❌ 登录失败：' + e.message);
+            } finally { authLoading.value = false; }
+        };
+
+        // 登出
+        const doLogout = () => {
+            authToken.value = '';
+            authUser.value = null;
+            localStorage.removeItem('nahfimap_token');
+            localStorage.removeItem('nahfimap_user');
+            localStorage.removeItem('nahfimap_last_sync');
+            lastSyncTs.value = 0;
+            showToast('👋 已退出登录');
+        };
+
+        // ── Sync state ──
         const syncStatus = ref('idle');  // 'idle' | 'syncing' | 'ok' | 'err'
         const lastSyncTs = ref(parseInt(localStorage.getItem('nahfimap_last_sync')||'0',10));
 
         const syncCloud = async () => {
             if (!CLOUD_API_URL) { showToast('⚠️ 请先配置 Worker URL'); return; }
+            if (!isLoggedIn.value) { showAuthModal.value = true; showToast('⚠️ 请先登录'); return; }
             if (syncStatus.value === 'syncing') return;
             syncStatus.value = 'syncing';
             try {
@@ -3011,12 +3181,18 @@ createApp({
 
                 /* ══ 1. 拉取服务端增量数据 ══ */
                 const [plRes, jRes] = await Promise.all([
-                    fetch(`${CLOUD_API_URL}/api/places?since=${since}`).then(r=>r.json()),
-                    fetch(`${CLOUD_API_URL}/api/journeys?since=${since}`).then(r=>r.json()),
+                    fetch(`${CLOUD_API_URL}/api/places?since=${since}`, { headers: authHeaders() }).then(r => r.json()),
+                    fetch(`${CLOUD_API_URL}/api/journeys?since=${since}`, { headers: authHeaders() }).then(r => r.json()),
                 ]);
-                if (!plRes.ok || !jRes.ok) throw new Error('拉取失败');
+                if (!plRes.ok) {
+                    if (plRes.error?.includes('token') || plRes.error?.includes('登录')) {
+                        doLogout(); throw new Error('登录已过期，请重新登录');
+                    }
+                    throw new Error(plRes.error || '拉取地点失败');
+                }
+                if (!jRes.ok) throw new Error(jRes.error || '拉取旅程失败');
 
-                /* ══ 2. 将服务端变更写入本地（仅当服务端更新时间更新时覆盖）══ */
+                /* ══ 2. 将服务端变更写入本地 ══ */
                 const serverPlaces = plRes.places || [];
                 const serverJourneys = jRes.journeys || [];
 
@@ -3051,26 +3227,23 @@ createApp({
                     ? (await dbObj.value.journeys.where('updatedAt').above(since).toArray())
                     : (await dbObj.value.journeys.toArray());
 
-                // 为没有 updatedAt 的旧数据补上时间戳
                 const now = Date.now();
                 const toUploadPlaces = localPlaces.map(p => ({ ...p, updatedAt: p.updatedAt || now }));
                 const toUploadJourneys = localJourneys.map(j => ({ ...j, updatedAt: j.updatedAt || now }));
 
                 if (toUploadPlaces.length) {
                     const r = await fetch(`${CLOUD_API_URL}/api/places/push`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        method: 'POST', headers: authHeaders(),
                         body: JSON.stringify({ places: toUploadPlaces }),
                     }).then(r => r.json());
-                    if (!r.ok) throw new Error('推送地点失败');
+                    if (!r.ok) throw new Error(r.error || '推送地点失败');
                 }
                 if (toUploadJourneys.length) {
                     const r = await fetch(`${CLOUD_API_URL}/api/journeys/push`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        method: 'POST', headers: authHeaders(),
                         body: JSON.stringify({ journeys: toUploadJourneys }),
                     }).then(r => r.json());
-                    if (!r.ok) throw new Error('推送旅程失败');
+                    if (!r.ok) throw new Error(r.error || '推送旅程失败');
                 }
 
                 /* ══ 4. 更新本地时间戳 + 刷新视图 ══ */
@@ -3110,6 +3283,8 @@ createApp({
             importTrack,selectTrack,removeTrack,clearTracks,exportBackup,prepareImport,importConfirm,doImport,
             switchTile,toggleHeat,backToMap,
             syncStatus,lastSyncTs,syncCloud,
+            authToken,authUser,showAuthModal,authTab,authForm,authLoading,isLoggedIn,
+            doRegister,doLogin,doLogout,
         };
     }
 }).mount('#app');

@@ -2,8 +2,8 @@
  * NahfiMap Service Worker
  * 策略：Cache First（核心资源） + Network First（地图瓦片）
  */
-const CACHE_VERSION = 'nahfimap-v6';
-const TILE_CACHE    = 'nahfimap-tiles-v6';
+const CACHE_VERSION = 'nahfimap-v8';
+const TILE_CACHE    = 'nahfimap-tiles-v8';
 
 // 核心静态资源 - 离线时从缓存读取
 const CORE_ASSETS = [
