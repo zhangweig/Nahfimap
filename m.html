@@ -12,6 +12,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="NahfiMap">
+    <meta name="background_color" content="#1B4332">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
     <meta name="description" content="记录你的户外足迹：露营、徒步、公园景点，支持照片和路线">
@@ -61,16 +62,25 @@
         background:var(--bg);color:var(--t1);
         -webkit-font-smoothing:antialiased;
         -webkit-text-size-adjust:100%;
+        -webkit-touch-callout:none;
+        -webkit-user-select:none;
+        user-select:none;
+        touch-action:manipulation;
+        /* Use dvh for proper fullscreen in PWA standalone mode */
+        height:100dvh;
     }
 
-    #app{width:100%;height:100%;position:relative;overflow:hidden}
+    #app{width:100%;height:100%;position:relative;overflow:hidden;height:100dvh}
 
     /* ── Map (full screen, always visible) ── */
-    #map{position:absolute;inset:0;z-index:1}
+    #map{position:absolute;inset:0;z-index:1;height:100dvh}
     .leaflet-control-zoom{display:none}
     /* Subdue map tiles for sunlight readability */
     #map{filter:saturate(.68) contrast(.94) brightness(1.02)}
     .leaflet-tile-pane{filter:saturate(.62) contrast(.88) brightness(1.06) sepia(.04) hue-rotate(10deg)}
+
+    /* Allow text selection in input/textarea only */
+    input,textarea,select{-webkit-user-select:text;user-select:text;touch-action:manipulation}
 
     /* ══════════ BOTTOM NAVIGATION ══════════ */
     .bnav{
@@ -684,9 +694,15 @@
     /* ── iOS PWA standalone tweaks ── */
     @media(display-mode:standalone){
         .fsearch{top:calc(var(--safe-t) + 4px)}
+        html,body,#app,#map{height:100vh;height:100dvh}
+        /* Ensure no blank bar at bottom in standalone mode */
+        .bnav{padding-bottom:max(var(--safe-b),8px)}
     }
     @supports(padding-top:env(safe-area-inset-top)){
         .fsearch{top:calc(env(safe-area-inset-top) + 8px)}
+    }
+    @supports(height:100dvh){
+        html,body,#app,#map{height:100dvh}
     }
     </style>
 </head>
@@ -838,7 +854,7 @@
                     </button>
                 </template>
                 <template v-else>
-                    <button class="sync-btn login" @click="showAuthModal=true">🔐 登录云同步</button>
+                    <button class="sync-btn login" @click="openAuthModal">🔐 登录云同步</button>
                 </template>
                 <div class="backup-row" style="margin-top:8px">
                     <button class="backup-btn" @click="exportBackup">⬇ 导出</button>
@@ -1015,7 +1031,7 @@
     <!-- ═══ Auth Modal ═══ -->
     <div v-if="showAuthModal" class="modal-bg" @click.self="showAuthModal=false">
         <div class="auth-modal">
-            <button class="modal-x" style="position:absolute;top:12px;right:12px" @click="showAuthModal=false">✕</button>
+            <button class="modal-x" style="position:absolute;top:12px;right:12px;z-index:2" @click="showAuthModal=false">✕</button>
             <div class="auth-logo">🏔️ NahfiMap</div>
             <div class="auth-subtitle">户外足迹 · 云端同步</div>
             <div class="auth-tabs">
@@ -1023,9 +1039,10 @@
                 <button class="auth-tab" :class="{on:authTab==='register'}" @click="authTab='register'">注册</button>
             </div>
             <div class="auth-form">
-                <div v-if="authTab==='register'" class="fgroup"><label class="flabel">昵称</label><input class="finput" v-model="authForm.name" placeholder="你的昵称" @keyup.enter="doRegister"></div>
-                <div class="fgroup"><label class="flabel">邮箱</label><input class="finput" type="email" v-model="authForm.email" placeholder="email@example.com" @keyup.enter="authTab==='login'?doLogin():doRegister()"></div>
-                <div class="fgroup"><label class="flabel">密码</label><input class="finput" type="password" v-model="authForm.password" placeholder="至少 6 位" @keyup.enter="authTab==='login'?doLogin():doRegister()"></div>
+                <div v-if="authTab==='register'" class="fgroup"><label class="flabel">昵称</label><input class="finput" v-model="authForm.name" placeholder="你的昵称" autocomplete="nickname" @keyup.enter="authTab==='login'?doLogin():doRegister()"></div>
+                <div class="fgroup"><label class="flabel">邮箱</label><input class="finput" type="email" v-model="authForm.email" placeholder="email@example.com" autocomplete="email" @keyup.enter="authTab==='login'?doLogin():doRegister()"></div>
+                <div class="fgroup"><label class="flabel">密码</label><input class="finput" type="password" v-model="authForm.password" placeholder="至少 6 位" autocomplete="current-password" @keyup.enter="authTab==='login'?doLogin():doRegister()"></div>
+                <div v-if="authError" style="font-size:12px;color:var(--c-red);margin-bottom:8px;text-align:center">{{authError}}</div>
                 <button v-if="authTab==='login'" class="auth-btn" :disabled="authLoading" @click="doLogin">{{authLoading?'登录中…':'登录'}}</button>
                 <button v-else class="auth-btn" :disabled="authLoading" @click="doRegister">{{authLoading?'注册中…':'注册'}}</button>
             </div>
@@ -1072,7 +1089,7 @@
         <button class="bnav-btn" :class="{on:activeNav==='journeys'}" @click="openSheetTab('journeys')">
             <span class="bnav-icon">🗓️</span><span>旅程</span>
         </button>
-        <button class="bnav-btn" :class="{on:activeNav==='sync'}" @click="isLoggedIn?syncCloud():showAuthModal=true">
+        <button class="bnav-btn" :class="{on:activeNav==='sync'}" @click="isLoggedIn?syncCloud():openAuthModal()">
             <span class="bnav-icon">{{isLoggedIn?(syncStatus==='syncing'?'⟳':syncStatus==='ok'?'✓':syncStatus==='err'?'⚠':'☁'):'🔐'}}</span><span>{{isLoggedIn?'同步':'登录'}}</span>
         </button>
     </nav>
@@ -1158,8 +1175,41 @@ createApp({
             const m=L.map('map',{center:[31,103.5],zoom:5,zoomControl:false,doubleClickZoom:false,attributionControl:false});
             mapObj.value=m;
             switchTile('voyager');
+
+            // ── Long-press to add marker (replaces right-click for mobile) ──
+            let longPressTimer=null,longPressPos=null,isLongPress=false;
+            const mapEl=document.getElementById('map');
+            const startLongPress=e=>{
+                isLongPress=false;
+                const touch=e.touches?e.touches[0]:e;
+                longPressPos={x:touch.clientX,y:touch.clientY};
+                longPressTimer=setTimeout(()=>{
+                    isLongPress=true;
+                    const ll=m.containerPointToLatLng(L.point(longPressPos.x,longPressPos.y));
+                    const stored=mapLatLngToStored(ll);
+                    ctx.value={show:true,x:longPressPos.x,y:longPressPos.y,lat:stored.lat,lng:stored.lng};
+                },600);
+            };
+            const moveLongPress=e=>{
+                if(!longPressTimer)return;
+                const touch=e.touches?e.touches[0]:e;
+                if(longPressPos&&(Math.abs(touch.clientX-longPressPos.x)>10||Math.abs(touch.clientY-longPressPos.y)>10)){
+                    clearTimeout(longPressTimer);longPressTimer=null;
+                }
+            };
+            const endLongPress=()=>{clearTimeout(longPressTimer);longPressTimer=null};
+            mapEl.addEventListener('touchstart',startLongPress,{passive:true});
+            mapEl.addEventListener('touchmove',moveLongPress,{passive:true});
+            mapEl.addEventListener('touchend',endLongPress);
+            // Desktop: keep right-click contextmenu
             m.on('contextmenu',e=>{const ll=mapLatLngToStored(e.latlng);ctx.value={show:true,x:e.containerPoint.x,y:e.containerPoint.y,lat:ll.lat,lng:ll.lng}});
-            m.on('click',()=>{ctx.value.show=false;if(detailOpen.value){detailPlace.value=null;dpPhotoIdx=0}});
+            // Click to dismiss context menu / detail
+            m.on('click',e=>{
+                if(isLongPress){isLongPress=false;return} // don't dismiss if long-press just fired
+                ctx.value.show=false;if(detailOpen.value){detailPlace.value=null;dpPhotoIdx=0}
+            });
+            // Prevent browser's default long-press menu on the map
+            mapEl.addEventListener('contextmenu',e=>e.preventDefault());
         };
 
         const switchTile=id=>{
@@ -1357,11 +1407,13 @@ createApp({
         const showAuthModal=ref(false),authTab=ref('login');
         const authForm=reactive({email:'',password:'',name:''});
         const authLoading=ref(false);
+        const authError=ref('');
         const isLoggedIn=computed(()=>!!authToken.value&&!!authUser.value);
         const authHeaders=()=>({'Content-Type':'application/json','Authorization':`Bearer ${authToken.value}`});
+        const openAuthModal=()=>{authForm.email='';authForm.password='';authForm.name='';authError.value='';authTab.value='login';showAuthModal.value=true};
 
-        const doRegister=async()=>{if(!authForm.email||!authForm.password||!authForm.name){showToast('⚠️ 请填写所有字段');return}if(authForm.password.length<6){showToast('⚠️ 密码至少 6 位');return}authLoading.value=true;try{const r=await fetch(`${CLOUD_API_URL}/api/auth/register`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:authForm.email,password:authForm.password,name:authForm.name})}).then(r=>r.json());if(!r.ok)throw new Error(r.error);authToken.value=r.token;authUser.value=r.user;localStorage.setItem('nahfimap_token',r.token);localStorage.setItem('nahfimap_user',JSON.stringify(r.user));showAuthModal.value=false;showToast(`✅ 注册成功，欢迎 ${r.user.name}！`)}catch(e){showToast('❌ 注册失败：'+e.message)}finally{authLoading.value=false}};
-        const doLogin=async()=>{if(!authForm.email||!authForm.password){showToast('⚠️ 请输入邮箱和密码');return}authLoading.value=true;try{const r=await fetch(`${CLOUD_API_URL}/api/auth/login`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:authForm.email,password:authForm.password})}).then(r=>r.json());if(!r.ok)throw new Error(r.error);authToken.value=r.token;authUser.value=r.user;localStorage.setItem('nahfimap_token',r.token);localStorage.setItem('nahfimap_user',JSON.stringify(r.user));showAuthModal.value=false;showToast(`✅ 登录成功，欢迎 ${r.user.name}！`)}catch(e){showToast('❌ 登录失败：'+e.message)}finally{authLoading.value=false}};
+        const doRegister=async()=>{authError.value='';if(!authForm.email||!authForm.password||!authForm.name){authError.value='请填写所有字段';return}if(authForm.password.length<6){authError.value='密码至少 6 位';return}authLoading.value=true;try{const res=await fetch(`${CLOUD_API_URL}/api/auth/register`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:authForm.email,password:authForm.password,name:authForm.name})});const r=await res.json();if(!r.ok)throw new Error(r.error||'注册失败');authToken.value=r.token;authUser.value=r.user;localStorage.setItem('nahfimap_token',r.token);localStorage.setItem('nahfimap_user',JSON.stringify(r.user));showAuthModal.value=false;showToast(`✅ 注册成功，欢迎 ${r.user.name}！`)}catch(e){authError.value=e.message;showToast('❌ 注册失败：'+e.message)}finally{authLoading.value=false}};
+        const doLogin=async()=>{authError.value='';if(!authForm.email||!authForm.password){authError.value='请输入邮箱和密码';return}authLoading.value=true;try{const res=await fetch(`${CLOUD_API_URL}/api/auth/login`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:authForm.email,password:authForm.password})});const r=await res.json();if(!r.ok)throw new Error(r.error||'登录失败');authToken.value=r.token;authUser.value=r.user;localStorage.setItem('nahfimap_token',r.token);localStorage.setItem('nahfimap_user',JSON.stringify(r.user));showAuthModal.value=false;showToast(`✅ 登录成功，欢迎 ${r.user.name}！`)}catch(e){authError.value=e.message;showToast('❌ 登录失败：'+e.message)}finally{authLoading.value=false}};
         const doLogout=()=>{authToken.value='';authUser.value=null;localStorage.removeItem('nahfimap_token');localStorage.removeItem('nahfimap_user');localStorage.removeItem('nahfimap_last_sync');lastSyncTs.value=0;showToast('👋 已退出登录')};
 
         const syncStatus=ref('idle');
@@ -1414,8 +1466,8 @@ createApp({
             setCategory,applyFilter,focusTimelineMonth,focusLatestMonth,
             goMap,openSheetTab,closeSheet,startDrag,onDrag,endDrag,
             syncStatus,lastSyncTs,syncCloud,
-            authToken,authUser,showAuthModal,authTab,authForm,authLoading,isLoggedIn,
-            doRegister,doLogin,doLogout,
+            authToken,authUser,showAuthModal,authTab,authForm,authLoading,authError,isLoggedIn,
+            doRegister,doLogin,doLogout,openAuthModal,
             stats,filteredPlaces,datedPlaces,timelineGroups,isGcj,
         };
     }

@@ -2,7 +2,7 @@
  * NahfiMap Mobile PWA Service Worker
  * 策略：Cache First（核心资源） + Stale While Revalidate（地图瓦片）
  */
-const CACHE_VERSION = 'nahfimap-m-v1';
+const CACHE_VERSION = 'nahfimap-m-v2';
 const TILE_CACHE    = 'nahfimap-m-tiles-v1';
 
 const CORE_ASSETS = [
