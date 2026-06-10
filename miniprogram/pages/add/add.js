@@ -24,15 +24,34 @@ Page({
   },
 
   onLoad(options) {
-    // Coordinates passed from map long-press or current location
-    if (options.lat && options.lng) {
+    // Check for coords passed from map long-press via globalData
+    // (tabBar pages cannot receive URL params from switchTab)
+    const pending = app.globalData._pendingAddCoords
+    if (pending && pending.lat && pending.lng) {
+      this.setData({
+        lat: pending.lat,
+        lng: pending.lng
+      })
+      delete app.globalData._pendingAddCoords
+    } else if (options.lat && options.lng) {
       this.setData({
         lat: parseFloat(options.lat),
         lng: parseFloat(options.lng)
       })
     } else {
-      // Use current location as default
       this._useCurrentLocation()
+    }
+  },
+
+  onShow() {
+    // Also check on show (for when returning from map long-press via switchTab)
+    const pending = app.globalData._pendingAddCoords
+    if (pending && pending.lat && pending.lng) {
+      this.setData({
+        lat: pending.lat,
+        lng: pending.lng
+      })
+      delete app.globalData._pendingAddCoords
     }
   },
 
@@ -145,9 +164,14 @@ Page({
     this.setData({ saving: false })
     wx.showToast({ title: '已保存！', icon: 'success' })
 
-    // Navigate back to map after saving
+    // Clear form and navigate back to map
+    this.setData({
+      name: '', category: 'food', difficulty: '', rating: 0,
+      note: '', photos: [], photoPaths: [], lat: 0, lng: 0,
+      useCurrentLocation: false, useExifCoord: false
+    })
     setTimeout(() => {
       wx.switchTab({ url: '/pages/map/map' })
-    }, 1000)
+    }, 800)
   }
 })

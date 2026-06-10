@@ -4,6 +4,106 @@ const db = require('../../utils/db')
 
 const app = getApp()
 
+// Simple KML parser (no dependency needed)
+function parseKML(text) {
+  const places = []
+  const polylines = []
+  // Match Placemark blocks
+  const pmRegex = /<Placemark[\s\S]*?<\/Placemark>/gi
+  const pms = text.match(pmRegex) || []
+  for (const pm of pms) {
+    const nameMatch = pm.match(/<name>([\s\S]*?)<\/name>/i)
+    const descMatch = pm.match(/<description>([\s\S]*?)<\/description>/i)
+    const name = nameMatch ? nameMatch[1].trim() : '未命名'
+
+    // Check for LineString (route/polyline)
+    const lineMatch = pm.match(/<LineString[\s\S]*?<coordinates>([\s\S]*?)<\/coordinates>/i)
+    if (lineMatch) {
+      const coords = lineMatch[1].trim().split(/\s+/).filter(c => c)
+      const points = coords.map(c => {
+        const [lng, lat] = c.split(',').map(Number)
+        return { lat, lng }
+      }).filter(p => p.lat && p.lng)
+      if (points.length > 1) {
+        polylines.push({ name, points })
+      }
+      continue
+    }
+
+    // Check for Point (place marker)
+    const pointMatch = pm.match(/<Point[\s\S]*?<coordinates>([\s\S]*?)<\/coordinates>/i)
+    if (pointMatch) {
+      const coord = pointMatch[1].trim().split(',')
+      const lng = parseFloat(coord[0])
+      const lat = parseFloat(coord[1])
+      if (lat && lng) {
+        places.push({
+          id: db.genId(),
+          name: name,
+          category: 'custom',
+          difficulty: '',
+          rating: 0,
+          note: descMatch ? descMatch[1].trim() : '',
+          lat, lng,
+          photos: [],
+          createdAt: Date.now(),
+          updatedAt: Date.now()
+        })
+      }
+    }
+  }
+  return { places, polylines }
+}
+
+// Simple GPX parser
+function parseGPX(text) {
+  const places = []
+  const polylines = []
+
+  // Waypoints
+  const wptRegex = /<wpt[\s\S]*?<\/wpt>/gi
+  const wpts = text.match(wptRegex) || []
+  for (const wpt of wpts) {
+    const latMatch = wpt.match(/lat="([^"]+)"/i)
+    const lonMatch = wpt.match(/lon="([^"]+)"/i)
+    const nameMatch = wpt.match(/<name>([\s\S]*?)<\/name>/i)
+    if (latMatch && lonMatch) {
+      places.push({
+        id: db.genId(),
+        name: nameMatch ? nameMatch[1].trim() : '未命名路点',
+        category: 'custom',
+        difficulty: '',
+        rating: 0,
+        note: '',
+        lat: parseFloat(latMatch[1]),
+        lng: parseFloat(lonMatch[1]),
+        photos: [],
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      })
+    }
+  }
+
+  // Tracks (polylines)
+  const trkRegex = /<trk[\s\S]*?<\/trk>/gi
+  const trks = text.match(trkRegex) || []
+  for (const trk of trks) {
+    const nameMatch = trk.match(/<name>([\s\S]*?)<\/name>/i)
+    const name = nameMatch ? nameMatch[1].trim() : '未命名路线'
+    const trkptRegex = /<trkpt\s+lat="([^"]+)"\s+lon="([^"]+)"/gi
+    let match
+    const points = []
+    while ((match = trkptRegex.exec(trk)) !== null) {
+      points.push({ lat: parseFloat(match[1]), lng: parseFloat(match[2]) })
+    }
+    if (points.length > 1) {
+      polylines.push({ name, points })
+    }
+  }
+
+  return { places, polylines }
+}
+
 Page({
   data: {
     isLoggedIn: false,
@@ -223,5 +323,174 @@ Page({
       app.stopLocationMonitor()
       wx.showToast({ title: '附近提醒已关闭', icon: 'none' })
     }
+  },
+
+  // ── Export JSON ──
+  exportJSON() {
+    const data = db.exportAll()
+    const json = JSON.stringify(data, null, 2)
+    wx.setClipboardData({
+      data: json,
+      success: () => {
+        wx.showToast({ title: '已复制到剪贴板', icon: 'success' })
+      }
+    })
+  },
+
+  // ── Import JSON ──
+  importJSON() {
+    wx.showActionSheet({
+      itemList: ['从剪贴板粘贴', '选择文件'],
+      success: (res) => {
+        if (res.tapIndex === 0) {
+          this._importFromClipboard()
+        } else {
+          this._importFromFile()
+        }
+      }
+    })
+  },
+
+  _importFromClipboard() {
+    wx.getClipboardData({
+      success: (res) => {
+        try {
+          const data = JSON.parse(res.data)
+          this._doImport(data)
+        } catch (e) {
+          wx.showToast({ title: '剪贴板内容不是有效 JSON', icon: 'none' })
+        }
+      },
+      fail: () => {
+        wx.showToast({ title: '无法读取剪贴板', icon: 'none' })
+      }
+    })
+  },
+
+  _importFromFile() {
+    wx.chooseMessageFile({
+      count: 1,
+      type: 'file',
+      extension: ['json'],
+      success: (res) => {
+        const filePath = res.tempFiles[0].path
+        const fs = wx.getFileSystemManager()
+        try {
+          const content = fs.readFileSync(filePath, 'utf-8')
+          const data = JSON.parse(content)
+          this._doImport(data)
+        } catch (e) {
+          wx.showToast({ title: '文件解析失败', icon: 'none' })
+        }
+      }
+    })
+  },
+
+  _doImport(data) {
+    if (!data.places && !data.journeys) {
+      wx.showToast({ title: '无效数据格式', icon: 'none' })
+      return
+    }
+
+    // Merge: existing + imported (same id → imported wins if newer)
+    const localPlaces = db.getAllPlaces()
+    const localJourneys = db.getAllJourneys()
+    const importPlaces = data.places || []
+    const importJourneys = data.journeys || []
+
+    const mergedPlaces = this._mergeArrays(localPlaces, importPlaces)
+    const mergedJourneys = this._mergeArrays(localJourneys, importJourneys)
+
+    db.importAll({ places: mergedPlaces, journeys: mergedJourneys })
+    app.loadData()
+
+    this.setData({
+      placeCount: mergedPlaces.length,
+      journeyCount: mergedJourneys.length
+    })
+
+    wx.showToast({
+      title: `导入成功！+${importPlaces.length}地点 +${importJourneys.length}旅程`,
+      icon: 'success',
+      duration: 2000
+    })
+  },
+
+  _mergeArrays(local, imported) {
+    const map = {}
+    for (const item of local) map[item.id] = item
+    for (const item of imported) {
+      if (!map[item.id] || (item.updatedAt || 0) >= (map[item.id].updatedAt || 0)) {
+        map[item.id] = item
+      }
+    }
+    return Object.values(map)
+  },
+
+  // ── Import KML/GPX ──
+  importKML() {
+    wx.chooseMessageFile({
+      count: 1,
+      type: 'file',
+      extension: ['kml', 'gpx'],
+      success: (res) => {
+        const filePath = res.tempFiles[0].path
+        const fileName = res.tempFiles[0].name.toLowerCase()
+        const fs = wx.getFileSystemManager()
+        try {
+          const content = fs.readFileSync(filePath, 'utf-8')
+          let result
+
+          if (fileName.endsWith('.gpx')) {
+            result = parseGPX(content)
+          } else {
+            result = parseKML(content)
+          }
+
+          const { places, polylines } = result
+
+          if (places.length === 0 && polylines.length === 0) {
+            wx.showToast({ title: '文件中未找到地点或路线', icon: 'none' })
+            return
+          }
+
+          // Save places
+          if (places.length > 0) {
+            const existing = db.getAllPlaces()
+            const merged = this._mergeArrays(existing, places)
+            db.importAll({ places: merged, journeys: db.getAllJourneys() })
+          }
+
+          // Save polylines as journeys
+          if (polylines.length > 0) {
+            const existingJourneys = db.getAllJourneys()
+            for (const pl of polylines) {
+              existingJourneys.push({
+                id: db.genId(),
+                name: pl.name,
+                points: pl.points,
+                createdAt: Date.now(),
+                updatedAt: Date.now()
+              })
+            }
+            db.importAll({ places: db.getAllPlaces(), journeys: existingJourneys })
+          }
+
+          app.loadData()
+          this.setData({
+            placeCount: db.getAllPlaces().length,
+            journeyCount: db.getAllJourneys().length
+          })
+
+          wx.showToast({
+            title: `导入成功！+${places.length}地点 +${polylines.length}路线`,
+            icon: 'success',
+            duration: 2500
+          })
+        } catch (e) {
+          wx.showToast({ title: '文件解析失败: ' + e.message, icon: 'none' })
+        }
+      }
+    })
   }
 })

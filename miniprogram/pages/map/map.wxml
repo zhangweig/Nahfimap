@@ -42,8 +42,9 @@
     bindlongpress="onMapLongPress"
     style="width:100%;height:100%"></map>
 
-  <!-- ── Map controls (zoom + locate) ── -->
+  <!-- ── Map controls (zoom + locate + add) ── -->
   <view class="map-controls">
+    <view class="map-ctrl-btn add-fab" bindtap="goAddPage">＋</view>
     <view class="map-ctrl-btn {{isLocating?'locating':''}}" bindtap="locateUser">
       {{isLocating?'📍':'⊙'}}
     </view>

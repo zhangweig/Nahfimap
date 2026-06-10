@@ -39,6 +39,19 @@
 
     <!-- Logout -->
     <view class="btn btn-ghost" style="margin-top:16px" bindtap="doLogout">退出登录</view>
+
+    <!-- Data management -->
+    <view class="data-section">
+      <view class="sync-header">数据管理</view>
+      <view class="data-btns">
+        <view class="btn btn-dark" style="flex:1" bindtap="exportJSON">📤 导出 JSON</view>
+        <view class="btn btn-dark" style="flex:1" bindtap="importJSON">📥 导入 JSON</view>
+      </view>
+      <view class="data-btns" style="margin-top:8px">
+        <view class="btn btn-dark" style="flex:1" bindtap="importKML">🗺️ 导入 KML/GPX</view>
+      </view>
+      <view class="data-hint">导入数据将与本地数据合并（同 ID 覆盖）</view>
+    </view>
   </view>
 
   <!-- ══ Not logged in ══ -->
@@ -111,6 +124,19 @@
       <view class="nearby-toggle-desc">
         {{nearbyEnabled?'开启后会持续检测附近收藏地点':'关闭后不会收到提醒'}}
       </view>
+    </view>
+
+    <!-- Data management (no login needed) -->
+    <view class="data-section">
+      <view class="sync-header">数据管理</view>
+      <view class="data-btns">
+        <view class="btn btn-dark" style="flex:1" bindtap="exportJSON">📤 导出 JSON</view>
+        <view class="btn btn-dark" style="flex:1" bindtap="importJSON">📥 导入 JSON</view>
+      </view>
+      <view class="data-btns" style="margin-top:8px">
+        <view class="btn btn-dark" style="flex:1" bindtap="importKML">🗺️ 导入 KML/GPX</view>
+      </view>
+      <view class="data-hint">导入数据将与本地数据合并（同 ID 覆盖）</view>
     </view>
   </view>
 </view>

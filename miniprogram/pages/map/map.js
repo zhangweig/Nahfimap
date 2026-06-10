@@ -98,6 +98,7 @@ Page({
   renderMarkers() {
     app.loadData()
     const places = app.globalData.places
+    const journeys = app.globalData.journeys
     const activeCat = this.data.activeCat
 
     const filtered = activeCat
@@ -128,7 +129,24 @@ Page({
       }
     })
 
-    this.setData({ markers })
+    // Render journey polylines
+    const polylines = (journeys || []).filter(j => j.points && j.points.length > 1).map(j => {
+      const gcjPoints = j.points.map(pt => {
+        const [gLat, gLng] = wgs84ToGcj02(pt.lat, pt.lng)
+        return { latitude: gLat, longitude: gLng }
+      })
+      return {
+        points: gcjPoints,
+        color: '#2DB86A99',
+        width: 3,
+        dottedLine: false,
+        arrowLine: true,
+        borderColor: '#2DB86A',
+        borderWidth: 1
+      }
+    })
+
+    this.setData({ markers, polylines })
   },
 
   _getMarkerIcon(cat) {
@@ -166,15 +184,30 @@ Page({
 
   onMapLongPress(e) {
     // Long press to add a new place at this location
-    const lat = e.detail.latitude  // GCJ-02 from map
-    const lng = e.detail.longitude
-    this.setData({
-      showAddModal: true,
-      addLat: lat.toFixed(4),
-      addLng: lng.toFixed(4)
-    })
-    // Store GCJ-02 coords for conversion later
-    this._addCoords = [lat, lng]
+    // Use mapCtx.getCenterLocation as fallback if e.detail has no coords
+    const that = this
+    if (e.detail && e.detail.latitude && e.detail.longitude) {
+      const lat = e.detail.latitude
+      const lng = e.detail.longitude
+      that.setData({
+        showAddModal: true,
+        addLat: lat.toFixed(4),
+        addLng: lng.toFixed(4)
+      })
+      that._addCoords = [lat, lng]
+    } else {
+      // Fallback: get center of map
+      this._mapCtx.getCenterLocation({
+        success(res) {
+          that.setData({
+            showAddModal: true,
+            addLat: res.latitude.toFixed(4),
+            addLng: res.longitude.toFixed(4)
+          })
+          that._addCoords = [res.latitude, res.longitude]
+        }
+      })
+    }
   },
 
   onRegionChange(e) {
@@ -191,10 +224,10 @@ Page({
   confirmAdd() {
     const [gcjLat, gcjLng] = this._addCoords
     const [wgsLat, wgsLng] = gcj02ToWgs84(gcjLat, gcjLng)
-    wx.navigateTo({
-      url: `/pages/add/add?lat=${wgsLat}&lng=${wgsLng}`
-    })
+    // Pass coords via globalData because switchTab can't carry query params
+    app.globalData._pendingAddCoords = { lat: wgsLat, lng: wgsLng }
     this.setData({ showAddModal: false })
+    wx.switchTab({ url: '/pages/add/add' })
   },
 
   cancelAdd() {
@@ -211,6 +244,11 @@ Page({
   },
 
   // ── Map controls ──
+
+  goAddPage() {
+    // Navigate to add page (tabBar), use current location
+    wx.switchTab({ url: '/pages/add/add' })
+  },
 
   locateUser() {
     this.setData({ isLocating: true })

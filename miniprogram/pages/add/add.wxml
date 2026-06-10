@@ -66,9 +66,13 @@
     <view class="add-label">坐标</view>
     <view class="coord-display">
       <text class="coord-icon">📍</text>
-      <text>{{lat}}, {{lng}}</text>
-      <text wx:if="{{useCurrentLocation}}" style="color:var(--c-green);font-size:12px;margin-left:4px">当前位置</text>
-      <text wx:elif="{{useExifCoord}}" style="color:var(--c-green);font-size:12px;margin-left:4px">照片定位</text>
+      <text wx:if="{{lat||lng}}">{{lat}}, {{lng}}</text>
+      <text wx:else style="color:var(--c-text3)">等待定位...</text>
+      <text wx:if="{{useCurrentLocation}}" style="color:var(--c-green);font-size:12px;margin-left:4px">📍当前位置</text>
+      <text wx:elif="{{useExifCoord}}" style="color:var(--c-green);font-size:12px;margin-left:4px">📷照片定位</text>
+    </view>
+    <view wx:if="{{lat&&lng}}" style="margin-top:8px;font-size:12px;color:var(--c-text3)">
+      💡 提示：也可以在地图页长按来添加地点
     </view>
   </view>
 

@@ -164,3 +164,22 @@
   color: var(--c-text2);
   margin-top: 4px;
 }
+
+/* ── Data management section ── */
+.data-section {
+  background: var(--c-bg-card);
+  border-radius: var(--r-lg);
+  padding: 16px 20px;
+  margin-top: 16px;
+  width: 100%;
+}
+.data-btns {
+  display: flex;
+  gap: 10px;
+}
+.data-hint {
+  font-size: 11px;
+  color: var(--c-text3);
+  margin-top: 8px;
+  text-align: center;
+}
