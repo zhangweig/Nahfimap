@@ -1,0 +1,68 @@
+/* ── Nearby Alert Card Component ── */
+.nearby-card {
+  background: #2C2C2E;
+  border-radius: 20px 20px 0 0;
+  padding: 16px 20px 24px;
+  box-shadow: 0 -4px 24px rgba(0,0,0,0.4);
+}
+.nearby-card-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.nearby-card-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #F5F5F7;
+}
+.nearby-card-count {
+  font-size: 13px;
+  color: #2DB86A;
+}
+
+.nearby-card-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 0;
+  gap: 12px;
+  border-bottom: 0.5px solid #48484A;
+}
+.nearby-card-item:last-of-type { border-bottom: none; }
+.nearby-card-icon {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 18px;
+}
+.nearby-card-info { flex: 1; min-width: 0; }
+.nearby-card-name {
+  font-size: 15px;
+  font-weight: 500;
+  color: #F5F5F7;
+}
+.nearby-card-dist {
+  font-size: 12px;
+  color: #8E8E93;
+  margin-top: 2px;
+}
+.nearby-card-go {
+  padding: 6px 14px;
+  border-radius: 8px;
+  background: #2DB86A;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.nearby-card-footer {
+  margin-top: 12px;
+  text-align: center;
+}
+.nearby-card-dismiss {
+  font-size: 13px;
+  color: #8E8E93;
+}

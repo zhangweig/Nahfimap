@@ -1,0 +1,252 @@
+/* ── Map page styles ── */
+
+.map-container {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  background: #1B4332;
+}
+
+/* ── Map component (native, full screen) ── */
+#map {
+  width: 100%;
+  height: 100%;
+}
+
+/* ── Search bar ── */
+.search-bar {
+  position: absolute;
+  top: 8px;
+  left: 16px;
+  right: 16px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  background: var(--c-bg-sheet);
+  border-radius: var(--r-lg);
+  padding: 0 14px;
+  min-height: 40px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+}
+.search-bar .search-icon {
+  color: var(--c-text3);
+  font-size: 16px;
+  margin-right: 8px;
+}
+.search-bar .search-input {
+  flex: 1;
+  background: transparent;
+  color: var(--c-text);
+  font-size: 14px;
+  padding: 0;
+  border: none;
+  min-height: 40px;
+}
+
+/* ── Category filter (floating top-right) ── */
+.cat-filter {
+  position: absolute;
+  top: 54px;
+  right: 12px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.cat-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--c-bg-sheet);
+  font-size: 18px;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.25);
+  transition: transform 0.15s;
+}
+.cat-btn:active { transform: scale(0.9); }
+.cat-btn.on {
+  box-shadow: 0 1px 12px rgba(45,184,106,0.4);
+  border: 2px solid var(--c-green);
+}
+
+/* ── Floating map controls ── */
+.map-controls {
+  position: absolute;
+  right: 12px;
+  bottom: 120px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.map-ctrl-btn {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-md);
+  background: var(--c-bg-sheet);
+  color: var(--c-text);
+  font-size: 16px;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
+.map-ctrl-btn:active { transform: scale(0.92); }
+.map-ctrl-btn.locating { color: var(--c-green); }
+
+/* ── Nearby alert sheet (the core feature!) ── */
+.nearby-sheet {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  background: var(--c-bg-sheet);
+  border-radius: var(--r-xl) var(--r-xl) 0 0;
+  padding: 16px 20px 24px;
+  box-shadow: 0 -4px 24px rgba(0,0,0,0.4);
+  transform: translateY(100%);
+  transition: transform 0.35s cubic-bezier(0.32, 0.72, 0.24, 1.02);
+}
+.nearby-sheet.show {
+  transform: translateY(0);
+}
+.nearby-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.nearby-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--c-text);
+}
+.nearby-count {
+  font-size: 13px;
+  color: var(--c-green);
+  margin-left: 6px;
+}
+.nearby-close {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--c-bg-card);
+  color: var(--c-text2);
+  font-size: 14px;
+}
+
+/* ── Nearby place item ── */
+.nearby-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 0;
+  gap: 12px;
+  border-bottom: 0.5px solid var(--c-sep);
+}
+.nearby-item:last-child { border-bottom: none; }
+.nearby-item-icon {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 18px;
+}
+.nearby-item-info { flex: 1; }
+.nearby-item-name {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--c-text);
+}
+.nearby-item-dist {
+  font-size: 12px;
+  color: var(--c-text2);
+  margin-top: 2px;
+}
+.nearby-item-go {
+  padding: 6px 14px;
+  border-radius: var(--r-sm);
+  background: var(--c-green);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* ── Tile switcher (floating bottom-right) ── */
+.tile-switcher {
+  position: absolute;
+  bottom: 120px;
+  left: 12px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.tile-btn {
+  padding: 8px 12px;
+  background: var(--c-bg-sheet);
+  border-radius: var(--r-md);
+  color: var(--c-text2);
+  font-size: 12px;
+  font-weight: 500;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.2);
+}
+.tile-btn:active { transform: scale(0.95); }
+.tile-btn.on {
+  background: var(--c-green);
+  color: #fff;
+}
+
+/* ── Toast ── */
+.page-toast {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0,0,0,0.75);
+  color: #fff;
+  padding: 16px 24px;
+  border-radius: var(--r-md);
+  font-size: 14px;
+  z-index: 9999;
+}
+
+/* ── Add by tap overlay ── */
+.add-overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 30;
+  background: rgba(0,0,0,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.add-modal {
+  background: var(--c-bg-sheet);
+  border-radius: var(--r-xl);
+  padding: 24px;
+  width: 85%;
+  max-width: 320px;
+}
+.add-modal-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--c-text);
+  text-align: center;
+  margin-bottom: 16px;
+}
+.add-modal-coord {
+  font-size: 12px;
+  color: var(--c-text2);
+  text-align: center;
+  margin-bottom: 16px;
+}

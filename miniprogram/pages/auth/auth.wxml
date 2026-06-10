@@ -1,0 +1,116 @@
+<!-- ── NahfiMap Auth / Sync Page ── -->
+<view class="auth-page">
+
+  <!-- Logo -->
+  <view class="auth-logo">NahfiMap</view>
+  <view class="auth-subtitle">户外足迹 · 云端同步 · 附近提醒</view>
+
+  <!-- ══ Logged in state ══ -->
+  <view wx:if="{{isLoggedIn}}" class="auth-logged-in">
+    <view class="auth-avatar">{{userInitial}}</view>
+    <view class="auth-user-name">{{authUser.name}}</view>
+    <view class="auth-user-email">{{authUser.email}}</view>
+    <view class="auth-stat">
+      <text class="auth-stat-num">{{placeCount}}</text> 个地点 ·
+      <text class="auth-stat-num">{{journeyCount}}</text> 个旅程
+    </view>
+
+    <!-- Sync section -->
+    <view class="sync-section">
+      <view class="sync-header">云端同步</view>
+      <view class="sync-status" wx:if="{{syncStatus}}">{{syncStatus}}</view>
+      <view class="sync-btns">
+        <view class="btn btn-green" style="flex:1" bindtap="syncCloud">
+          {{syncing?'同步中...':'立即同步'}}
+        </view>
+      </view>
+    </view>
+
+    <!-- Nearby alert settings -->
+    <view class="nearby-section">
+      <view class="nearby-toggle">
+        <view class="nearby-toggle-label">附近提醒</view>
+        <switch checked="{{nearbyEnabled}}" bindchange="toggleNearby" color="#2DB86A"/>
+      </view>
+      <view class="nearby-toggle-desc">
+        {{nearbyEnabled?'开启后，靠近收藏的地点时会弹出提醒':'关闭后，不会收到附近提醒'}}
+      </view>
+    </view>
+
+    <!-- Logout -->
+    <view class="btn btn-ghost" style="margin-top:16px" bindtap="doLogout">退出登录</view>
+  </view>
+
+  <!-- ══ Not logged in ══ -->
+  <view wx:else>
+    <!-- Tabs -->
+    <view class="auth-tabs">
+      <view class="auth-tab {{authTab==='login'?'on':''}}" bindtap="switchTab" data-tab="login">登录</view>
+      <view class="auth-tab {{authTab==='register'?'on':''}}" bindtap="switchTab" data-tab="register">注册</view>
+    </view>
+
+    <!-- Form -->
+    <view class="auth-form">
+      <!-- Register: nickname -->
+      <view wx:if="{{authTab==='register'}}" class="auth-field">
+        <view class="auth-field-label">昵称</view>
+        <input class="auth-field-input"
+          placeholder="你的昵称"
+          placeholder-style="color:#636366"
+          value="{{authForm.name}}"
+          bindinput="onFormInput"
+          data-field="name" />
+      </view>
+
+      <!-- Email -->
+      <view class="auth-field">
+        <view class="auth-field-label">邮箱</view>
+        <input class="auth-field-input"
+          type="text"
+          placeholder="email@example.com"
+          placeholder-style="color:#636366"
+          value="{{authForm.email}}"
+          bindinput="onFormInput"
+          data-field="email" />
+      </view>
+
+      <!-- Password -->
+      <view class="auth-field">
+        <view class="auth-field-label">密码</view>
+        <input class="auth-field-input"
+          type="safe-password"
+          placeholder="至少 6 位"
+          placeholder-style="color:#636366"
+          value="{{authForm.password}}"
+          bindinput="onFormInput"
+          data-field="password" />
+      </view>
+
+      <!-- Error -->
+      <view wx:if="{{authError}}" class="auth-error">{{authError}}</view>
+
+      <!-- Submit -->
+      <view wx:if="{{authTab==='login'}}"
+        class="btn btn-green" style="margin-top:10px"
+        bindtap="doLogin">{{loading?'登录中...':'登录'}}</view>
+      <view wx:else
+        class="btn btn-green" style="margin-top:10px"
+        bindtap="doRegister">{{loading?'注册中...':'注册'}}</view>
+    </view>
+
+    <view class="auth-hint">
+      {{authTab==='login'?'没有账号？点击上方「注册」':'已有账号？点击上方「登录」'}}
+    </view>
+
+    <!-- Nearby alert (works without login, but limited) -->
+    <view class="nearby-section">
+      <view class="nearby-toggle">
+        <view class="nearby-toggle-label">附近提醒</view>
+        <switch checked="{{nearbyEnabled}}" bindchange="toggleNearby" color="#2DB86A"/>
+      </view>
+      <view class="nearby-toggle-desc">
+        {{nearbyEnabled?'开启后会持续检测附近收藏地点':'关闭后不会收到提醒'}}
+      </view>
+    </view>
+  </view>
+</view>

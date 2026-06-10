@@ -1,0 +1,22 @@
+<!-- ── Nearby Alert Card Component ── -->
+<!-- Used in map page to show proximity reminders -->
+
+<view class="nearby-card" wx:if="{{visible}}">
+  <view class="nearby-card-header">
+    <text class="nearby-card-title">📍 附近发现</text>
+    <text class="nearby-card-count">{{places.length}} 个收藏地点</text>
+  </view>
+  <view wx:for="{{places}}" wx:key="id" class="nearby-card-item" bindtap="goToPlace" data-id="{{item.id}}">
+    <view class="nearby-card-icon" style="background:{{item.catColor}}20;color:{{item.catColor}}">
+      {{item.catIcon}}
+    </view>
+    <view class="nearby-card-info">
+      <text class="nearby-card-name">{{item.name}}</text>
+      <text class="nearby-card-dist">{{item.distanceText}} · {{item.walkTimeText}}</text>
+    </view>
+    <view class="nearby-card-go">前往</view>
+  </view>
+  <view class="nearby-card-footer" bindtap="dismiss">
+    <text class="nearby-card-dismiss">稍后提醒</text>
+  </view>
+</view>

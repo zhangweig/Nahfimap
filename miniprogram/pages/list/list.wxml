@@ -1,0 +1,58 @@
+<!-- ── NahfiMap List Page ── -->
+<view class="list-page">
+  <!-- Header -->
+  <view class="list-header">
+    <view class="list-title">我的足迹</view>
+    <view class="list-count">{{filteredPlaces.length}} 个地点</view>
+  </view>
+
+  <!-- Search -->
+  <view class="list-search">
+    <text style="color:var(--c-text3);margin-right:8px">🔍</text>
+    <input class="list-search-input"
+      placeholder="搜索地点..."
+      placeholder-style="color:#636366"
+      value="{{searchQuery}}"
+      bindinput="onSearch" />
+  </view>
+
+  <!-- Category tabs -->
+  <view class="cat-tabs">
+    <view wx:for="{{categories}}" wx:key="key"
+      class="cat-tab {{activeCat===item.key?'on':''}}"
+      style="{{activeCat===item.key?'background:'+item.color:''}}"
+      bindtap="toggleCat"
+      data-cat="{{item.key}}">
+      {{item.icon}} {{item.label}}
+    </view>
+  </view>
+
+  <!-- Place cards -->
+  <view wx:if="{{filteredPlaces.length > 0}}">
+    <view wx:for="{{filteredPlaces}}" wx:key="id"
+      class="place-card"
+      bindtap="goDetail"
+      data-id="{{item.id}}">
+      <view class="place-icon"
+        style="background:{{item.catColor}}20;color:{{item.catColor}}">
+        {{item.catIcon}}
+      </view>
+      <view class="place-info">
+        <view class="place-name">{{item.name}}</view>
+        <view class="place-meta">
+          <text>{{item.catLabel}}</text>
+          <text wx:if="{{item.difficulty}}">· {{item.difficulty}}</text>
+          <text wx:if="{{item.rating}}">· {{item.rating}}星</text>
+        </view>
+      </view>
+      <view wx:if="{{item.distanceText}}" class="place-distance">{{item.distanceText}}</view>
+    </view>
+  </view>
+
+  <!-- Empty state -->
+  <view wx:else class="list-empty">
+    <view class="list-empty-icon">🗺️</view>
+    <view class="list-empty-text">{{searchQuery?'没有找到匹配的地点':'还没有收藏地点'}}</view>
+    <view wx:if="{{!searchQuery}}" class="list-empty-btn" bindtap="goAdd">去地图添加</view>
+  </view>
+</view>

@@ -1,0 +1,89 @@
+<!-- ── NahfiMap Add Place Page ── -->
+<view class="add-page">
+  <!-- Name -->
+  <view class="add-section">
+    <view class="add-label">地点名称</view>
+    <input class="add-input"
+      placeholder="输入地点名称"
+      placeholder-style="color:#636366"
+      value="{{name}}"
+      bindinput="onNameInput" />
+  </view>
+
+  <!-- Category -->
+  <view class="add-section">
+    <view class="add-label">分类</view>
+    <view class="cat-selector">
+      <view wx:for="{{categories}}" wx:key="key"
+        class="cat-option {{category===item.key?'on':''}}"
+        style="{{category===item.key?'background:'+item.color+'20;border-color:'+item.color:''}}"
+        bindtap="selectCat"
+        data-cat="{{item.key}}">
+        {{item.icon}} {{item.label}}
+      </view>
+    </view>
+  </view>
+
+  <!-- Difficulty -->
+  <view class="add-section">
+    <view class="add-label">难度</view>
+    <view class="diff-selector">
+      <view class="diff-option {{difficulty==='轻松'?'on':''}}" bindtap="selectDiff" data-d="轻松">轻松</view>
+      <view class="diff-option {{difficulty==='中等'?'on':''}}" bindtap="selectDiff" data-d="中等">中等</view>
+      <view class="diff-option {{difficulty==='困难'?'on':''}}" bindtap="selectDiff" data-d="困难">困难</view>
+    </view>
+  </view>
+
+  <!-- Rating -->
+  <view class="add-section">
+    <view class="add-label">评分</view>
+    <view class="star-row">
+      <view wx:for="{{[1,2,3,4,5]}}" wx:key="*this"
+        class="star-item {{rating>=item?'on':''}}"
+        bindtap="selectRating"
+        data-r="{{item}}">
+        ★
+      </view>
+    </view>
+  </view>
+
+  <!-- Photos -->
+  <view class="add-section">
+    <view class="add-label">照片（最多6张）</view>
+    <view class="photo-picker">
+      <view wx:for="{{photos}}" wx:key="*this" class="photo-thumb">
+        <image src="{{item}}" mode="aspectFill"></image>
+      </view>
+      <view wx:if="{{photos.length<6}}" class="photo-add-btn" bindtap="choosePhoto">+</view>
+    </view>
+    <view wx:if="{{hasExifCoord}}" style="margin-top:8px;font-size:12px;color:var(--c-green)">
+      已从照片 EXIF 读取 GPS 坐标
+    </view>
+  </view>
+
+  <!-- Coordinate -->
+  <view class="add-section">
+    <view class="add-label">坐标</view>
+    <view class="coord-display">
+      <text class="coord-icon">📍</text>
+      <text>{{lat}}, {{lng}}</text>
+      <text wx:if="{{useCurrentLocation}}" style="color:var(--c-green);font-size:12px;margin-left:4px">当前位置</text>
+      <text wx:elif="{{useExifCoord}}" style="color:var(--c-green);font-size:12px;margin-left:4px">照片定位</text>
+    </view>
+  </view>
+
+  <!-- Note -->
+  <view class="add-section">
+    <view class="add-label">备注</view>
+    <textarea class="add-textarea"
+      placeholder="添加备注..."
+      placeholder-style="color:#636366"
+      value="{{note}}"
+      bindinput="onNoteInput" />
+  </view>
+
+  <!-- Save -->
+  <view class="btn btn-green save-btn" bindtap="savePlace">
+    {{saving?'保存中...':'保存地点'}}
+  </view>
+</view>

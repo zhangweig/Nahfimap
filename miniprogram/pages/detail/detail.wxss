@@ -1,0 +1,125 @@
+/* ── Detail page styles ── */
+.detail-page {
+  background: var(--c-bg);
+  min-height: 100vh;
+}
+
+/* ── Photo gallery ── */
+.detail-photos {
+  width: 100%;
+  height: 240px;
+  position: relative;
+}
+.detail-photo {
+  width: 100%;
+  height: 240px;
+}
+
+/* ── Info section ── */
+.detail-info {
+  padding: 20px;
+}
+.detail-name {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--c-text);
+  margin-bottom: 6px;
+}
+.detail-cat-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.detail-coord {
+  font-size: 12px;
+  color: var(--c-text2);
+  margin-bottom: 16px;
+}
+
+/* ── Stats row ── */
+.detail-stats {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.detail-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--c-bg-card);
+  border-radius: var(--r-md);
+  padding: 12px 16px;
+  min-width: 80px;
+}
+.detail-stat-val {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--c-text);
+}
+.detail-stat-label {
+  font-size: 11px;
+  color: var(--c-text2);
+  margin-top: 2px;
+}
+
+/* ── Note ── */
+.detail-note {
+  background: var(--c-bg-card);
+  border-radius: var(--r-lg);
+  padding: 14px 16px;
+  font-size: 14px;
+  color: var(--c-text2);
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+
+/* ── Action buttons ── */
+.detail-actions {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.detail-act-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--touch);
+  border-radius: var(--r-md);
+  background: var(--c-bg-card);
+  color: var(--c-text2);
+  font-size: 14px;
+  font-weight: 500;
+  gap: 6px;
+}
+.detail-act-btn:active { opacity: 0.7; }
+.detail-act-btn.navigate {
+  background: var(--c-green);
+  color: #fff;
+}
+
+/* ── Nearby info ── */
+.detail-nearby-info {
+  background: rgba(45,184,106,0.1);
+  border-radius: var(--r-md);
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.detail-nearby-icon {
+  font-size: 20px;
+  color: var(--c-green);
+}
+.detail-nearby-text {
+  font-size: 14px;
+  color: var(--c-green);
+}
+
+/* ── Delete button ── */
+.detail-delete {
+  margin-top: 24px;
+  width: 100%;
+}

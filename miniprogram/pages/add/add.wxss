@@ -1,0 +1,142 @@
+/* ── Add page styles ── */
+.add-page {
+  background: var(--c-bg);
+  min-height: 100vh;
+  padding: 16px 20px 80px;
+}
+
+.add-section {
+  margin-bottom: 20px;
+}
+
+.add-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-text2);
+  margin-bottom: 8px;
+}
+
+.add-input {
+  background: var(--c-bg-card);
+  border: 1px solid var(--c-sep);
+  border-radius: var(--r-md);
+  padding: 12px 14px;
+  color: var(--c-text);
+  font-size: 15px;
+  min-height: var(--touch);
+}
+.add-input:focus { border-color: var(--c-green); }
+
+.add-textarea {
+  background: var(--c-bg-card);
+  border: 1px solid var(--c-sep);
+  border-radius: var(--r-md);
+  padding: 12px 14px;
+  color: var(--c-text);
+  font-size: 14px;
+  min-height: 80px;
+  width: 100%;
+}
+
+/* ── Category selector ── */
+.cat-selector {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.cat-option {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 16px;
+  border-radius: var(--r-md);
+  background: var(--c-bg-card);
+  color: var(--c-text2);
+  font-size: 14px;
+  border: 2px solid transparent;
+}
+.cat-option:active { transform: scale(0.95); }
+.cat-option.on {
+  color: #fff;
+  border: 2px solid;
+}
+
+/* ── Difficulty selector ── */
+.diff-selector {
+  display: flex;
+  gap: 10px;
+}
+.diff-option {
+  padding: 10px 20px;
+  border-radius: var(--r-md);
+  background: var(--c-bg-card);
+  color: var(--c-text2);
+  font-size: 14px;
+  border: 2px solid transparent;
+}
+.diff-option.on {
+  color: #fff;
+  border: 2px solid var(--c-green);
+  background: rgba(45,184,106,0.15);
+}
+
+/* ── Star rating ── */
+.star-row {
+  display: flex;
+  gap: 4px;
+}
+.star-item {
+  font-size: 28px;
+  color: var(--c-text3);
+  padding: 4px;
+}
+.star-item.on { color: var(--c-star); }
+
+/* ── Photo picker ── */
+.photo-picker {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.photo-thumb {
+  width: 80px;
+  height: 80px;
+  border-radius: var(--r-md);
+  background: var(--c-bg-card);
+  overflow: hidden;
+}
+.photo-thumb image {
+  width: 100%;
+  height: 100%;
+}
+.photo-add-btn {
+  width: 80px;
+  height: 80px;
+  border-radius: var(--r-md);
+  background: var(--c-bg-card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--c-text3);
+  font-size: 28px;
+  border: 1px dashed var(--c-sep);
+}
+
+/* ── Coordinate display ── */
+.coord-display {
+  background: var(--c-bg-card);
+  border-radius: var(--r-md);
+  padding: 12px 16px;
+  font-size: 13px;
+  color: var(--c-text2);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.coord-icon { color: var(--c-green); }
+
+/* ── Save button ── */
+.save-btn {
+  margin-top: 24px;
+  width: 100%;
+}

@@ -1,0 +1,129 @@
+/* ── NahfiMap Mini Program Global Styles ── */
+/* Dark outdoor theme - sunlight readable + night usable */
+
+:root {
+  /* Colors */
+  --c-bg: #1C1C1E;
+  --c-bg-sheet: #2C2C2E;
+  --c-bg-card: #3A3A3C;
+  --c-green: #2DB86A;
+  --c-green-dark: #1B4332;
+  --c-red: #FF453A;
+  --c-orange: #FF9F0A;
+  --c-blue: #0A84FF;
+  --c-purple: #BF5AF2;
+  --c-yellow: #FFD60A;
+  --c-star: #FFD60A;
+  --c-text: #F5F5F7;
+  --c-text2: #8E8E93;
+  --c-text3: #636366;
+  --c-sep: #48484A;
+  --c-overlay: rgba(0,0,0,0.5);
+
+  /* Category colors */
+  --cat-camp: #2DB86A;
+  --cat-hike: #0A84FF;
+  --cat-park: #FF9F0A;
+  --cat-star: #BF5AF2;
+  --cat-food: #FF453A;
+  --cat-custom: #8E8E93;
+
+  /* Sizes */
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-xl: 20px;
+  --touch: 44px;
+}
+
+page {
+  background: var(--c-bg);
+  color: var(--c-text);
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'SF Pro Text', sans-serif;
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Common button ── */
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--touch);
+  border-radius: var(--r-md);
+  font-size: 15px;
+  font-weight: 600;
+  transition: opacity 0.15s;
+}
+.btn:active { opacity: 0.7; }
+.btn-green { background: var(--c-green); color: #fff; }
+.btn-red { background: var(--c-red); color: #fff; }
+.btn-ghost { background: transparent; color: var(--c-green); border: 1px solid var(--c-green); }
+.btn-dark { background: var(--c-bg-card); color: var(--c-text); }
+
+/* ── Common input ── */
+.input {
+  background: var(--c-bg-card);
+  border: 1px solid var(--c-sep);
+  border-radius: var(--r-md);
+  padding: 12px 14px;
+  color: var(--c-text);
+  font-size: 15px;
+  min-height: var(--touch);
+}
+.input:focus { border-color: var(--c-green); }
+
+/* ── Common card ── */
+.card {
+  background: var(--c-bg-card);
+  border-radius: var(--r-lg);
+  padding: 14px 16px;
+}
+
+/* ── Section label ── */
+.section-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--c-text3);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+/* ── Category pill ── */
+.cat-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  gap: 4px;
+}
+.cat-pill-camp { background: rgba(45,184,106,0.2); color: var(--cat-camp); }
+.cat-pill-hike { background: rgba(10,132,255,0.2); color: var(--cat-hike); }
+.cat-pill-park { background: rgba(255,159,10,0.2); color: var(--cat-park); }
+.cat-pill-star { background: rgba(191,90,242,0.2); color: var(--cat-star); }
+.cat-pill-food { background: rgba(255,69,58,0.2); color: var(--cat-food); }
+.cat-pill-custom { background: rgba(142,142,147,0.2); color: var(--cat-custom); }
+
+/* ── Toast overlay ── */
+.toast-wrap {
+  position: fixed;
+  left: 50%;
+  bottom: 120px;
+  transform: translateX(-50%);
+  background: var(--c-bg-sheet);
+  color: var(--c-text);
+  padding: 12px 24px;
+  border-radius: var(--r-lg);
+  font-size: 14px;
+  z-index: 9999;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+.toast-wrap.show { opacity: 1; }
+
+/* ── Safe area ── */
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom); }

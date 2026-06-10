@@ -1,0 +1,166 @@
+/* ── Auth page styles ── */
+.auth-page {
+  background: var(--c-bg);
+  min-height: 100vh;
+  padding: 24px 20px 80px;
+  display: flex;
+  flex-direction: column;
+}
+
+.auth-logo {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--c-green);
+  text-align: center;
+  margin-bottom: 4px;
+}
+.auth-subtitle {
+  font-size: 14px;
+  color: var(--c-text2);
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+/* ── Logged in state ── */
+.auth-logged-in {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+.auth-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: var(--c-green);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 24px;
+  font-weight: 600;
+}
+.auth-user-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--c-text);
+}
+.auth-user-email {
+  font-size: 13px;
+  color: var(--c-text2);
+}
+.auth-stat {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--c-text2);
+}
+.auth-stat-num {
+  color: var(--c-green);
+  font-weight: 600;
+}
+
+/* ── Sync section ── */
+.sync-section {
+  background: var(--c-bg-card);
+  border-radius: var(--r-lg);
+  padding: 16px 20px;
+  margin-top: 16px;
+  width: 100%;
+}
+.sync-header {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--c-text);
+  margin-bottom: 8px;
+}
+.sync-status {
+  font-size: 12px;
+  color: var(--c-text2);
+  margin-bottom: 12px;
+}
+.sync-btns {
+  display: flex;
+  gap: 10px;
+}
+
+/* ── Login/Register form ── */
+.auth-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 20px;
+  background: var(--c-bg-card);
+  border-radius: var(--r-md);
+}
+.auth-tab {
+  flex: 1;
+  text-align: center;
+  padding: 12px 0;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--c-text2);
+  border-radius: var(--r-md);
+}
+.auth-tab.on {
+  background: var(--c-green);
+  color: #fff;
+}
+
+.auth-form {
+  width: 100%;
+}
+.auth-field {
+  margin-bottom: 14px;
+}
+.auth-field-label {
+  font-size: 13px;
+  color: var(--c-text2);
+  margin-bottom: 6px;
+}
+.auth-field-input {
+  background: var(--c-bg-card);
+  border: 1px solid var(--c-sep);
+  border-radius: var(--r-md);
+  padding: 12px 14px;
+  color: var(--c-text);
+  font-size: 15px;
+  min-height: var(--touch);
+}
+
+.auth-error {
+  font-size: 12px;
+  color: var(--c-red);
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.auth-hint {
+  font-size: 12px;
+  color: var(--c-text3);
+  text-align: center;
+  margin-top: 12px;
+}
+
+/* ── Nearby settings ── */
+.nearby-section {
+  background: var(--c-bg-card);
+  border-radius: var(--r-lg);
+  padding: 16px 20px;
+  margin-top: 16px;
+  width: 100%;
+}
+.nearby-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.nearby-toggle-label {
+  font-size: 14px;
+  color: var(--c-text);
+}
+.nearby-toggle-desc {
+  font-size: 12px;
+  color: var(--c-text2);
+  margin-top: 4px;
+}

@@ -1,0 +1,71 @@
+<!-- ── NahfiMap Detail Page ── -->
+<view class="detail-page">
+  <!-- Photo gallery -->
+  <view class="detail-photos" wx:if="{{place.photos.length > 0}}">
+    <swiper style="width:100%;height:240px" indicator-dots="{{place.photos.length > 1}}"
+      indicator-color="rgba(255,255,255,0.4)" indicator-active-color="#fff"
+      autoplay="{{false}}" circular="{{true}}">
+      <swiper-item wx:for="{{place.photos}}" wx:key="*this">
+        <image class="detail-photo" src="{{item}}" mode="aspectFill"></image>
+      </swiper-item>
+    </swiper>
+  </view>
+  <view wx:else style="height:120px;background:var(--c-bg-card);display:flex;align-items:center;justify-content:center">
+    <text style="font-size:48px">{{catIcon}}</text>
+  </view>
+
+  <!-- Info -->
+  <view class="detail-info">
+    <view class="detail-name">{{place.name}}</view>
+    <view class="detail-cat-row">
+      <view class="cat-pill cat-pill-{{place.category}}" style="font-size:12px">
+        {{catIcon}} {{catLabel}}
+      </view>
+      <view wx:if="{{place.difficulty}}" class="cat-pill" style="background:var(--c-bg-card);color:var(--c-text2);font-size:12px">
+        {{place.difficulty}}
+      </view>
+    </view>
+    <view class="detail-coord">📍 {{place.lat}}, {{place.lng}}</view>
+
+    <!-- Nearby distance -->
+    <view wx:if="{{distanceText}}" class="detail-nearby-info">
+      <text class="detail-nearby-icon">📍</text>
+      <text class="detail-nearby-text">距你 {{distanceText}} · {{walkTimeText}}</text>
+    </view>
+
+    <!-- Stats -->
+    <view class="detail-stats">
+      <view class="detail-stat" wx:if="{{place.rating}}">
+        <view class="detail-stat-val" style="color:var(--c-star)">★ {{place.rating}}</view>
+        <view class="detail-stat-label">评分</view>
+      </view>
+      <view class="detail-stat">
+        <view class="detail-stat-val">{{catIcon}}</view>
+        <view class="detail-stat-label">{{catLabel}}</view>
+      </view>
+      <view class="detail-stat" wx:if="{{place.difficulty}}">
+        <view class="detail-stat-val">{{place.difficulty}}</view>
+        <view class="detail-stat-label">难度</view>
+      </view>
+    </view>
+
+    <!-- Note -->
+    <view wx:if="{{place.note}}" class="detail-note">{{place.note}}</view>
+
+    <!-- Actions -->
+    <view class="detail-actions">
+      <view class="detail-act-btn navigate" bindtap="navigateTo">
+        🧭 导航
+      </view>
+      <view class="detail-act-btn" bindtap="showOnMap">
+        🗺️ 地图
+      </view>
+      <view class="detail-act-btn" bindtap="sharePlace">
+        🔗 分享
+      </view>
+    </view>
+
+    <!-- Delete -->
+    <view class="btn btn-ghost detail-delete" bindtap="deletePlace">删除地点</view>
+  </view>
+</view>

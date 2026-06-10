@@ -1,0 +1,129 @@
+/* ── List page styles ── */
+.list-page {
+  background: var(--c-bg);
+  min-height: 100vh;
+  padding: 0 16px 80px;
+}
+
+.list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 0 12px;
+}
+.list-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--c-text);
+}
+.list-count {
+  font-size: 13px;
+  color: var(--c-text2);
+}
+
+/* ── Category tabs ── */
+.cat-tabs {
+  display: flex;
+  gap: 8px;
+  padding: 8px 0 16px;
+  overflow-x: auto;
+}
+.cat-tab {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 14px;
+  border-radius: 20px;
+  background: var(--c-bg-card);
+  color: var(--c-text2);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.cat-tab:active { transform: scale(0.95); }
+.cat-tab.on {
+  color: #fff;
+  font-weight: 600;
+}
+
+/* ── Place card ── */
+.place-card {
+  display: flex;
+  align-items: center;
+  padding: 14px 16px;
+  background: var(--c-bg-card);
+  border-radius: var(--r-lg);
+  margin-bottom: 10px;
+  gap: 12px;
+}
+.place-card:active { opacity: 0.85; }
+.place-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 20px;
+}
+.place-info { flex: 1; min-width: 0; }
+.place-name {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--c-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.place-meta {
+  font-size: 12px;
+  color: var(--c-text2);
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.place-distance {
+  font-size: 12px;
+  color: var(--c-green);
+}
+
+/* ── Empty state ── */
+.list-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  color: var(--c-text3);
+}
+.list-empty-icon { font-size: 48px; margin-bottom: 16px; }
+.list-empty-text { font-size: 15px; color: var(--c-text2); }
+.list-empty-btn {
+  margin-top: 16px;
+  padding: 12px 32px;
+  background: var(--c-green);
+  color: #fff;
+  border-radius: var(--r-md);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* ── Search ── */
+.list-search {
+  background: var(--c-bg-card);
+  border-radius: var(--r-md);
+  padding: 0 14px;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.list-search-input {
+  flex: 1;
+  background: transparent;
+  color: var(--c-text);
+  font-size: 14px;
+  border: none;
+  min-height: 40px;
+}

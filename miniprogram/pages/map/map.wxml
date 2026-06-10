@@ -1,0 +1,99 @@
+<!-- ── NahfiMap Map Page ── -->
+<!-- Core page: native map + markers + nearby alert sheet -->
+
+<view class="map-container">
+  <!-- ── Search bar ── -->
+  <view class="search-bar">
+    <text class="search-icon">🔍</text>
+    <input class="search-input"
+      placeholder="搜索地点..."
+      placeholder-style="color:#636366"
+      confirm-type="search"
+      bindconfirm="onSearch"
+      bindinput="onSearchInput"
+      value="{{searchQuery}}" />
+  </view>
+
+  <!-- ── Category filter ── -->
+  <view class="cat-filter">
+    <view wx:for="{{categories}}" wx:key="key"
+      class="cat-btn {{activeCat===item.key?'on':''}}"
+      style="{{activeCat===item.key?'background:'+item.color:''}}"
+      bindtap="toggleCat"
+      data-cat="{{item.key}}">
+      {{item.icon}}
+    </view>
+  </view>
+
+  <!-- ── Native map ── -->
+  <map id="map"
+    latitude="{{mapLat}}"
+    longitude="{{mapLng}}"
+    scale="{{mapScale}}"
+    markers="{{markers}}"
+    polylines="{{polylines}}"
+    show-location="{{showLocation}}"
+    enable-zoom="{{true}}"
+    enable-scroll="{{true}}"
+    enable-rotate="{{false}}"
+    bindmarkertap="onMarkerTap"
+    bindregionchange="onRegionChange"
+    bindtap="onMapTap"
+    bindlongpress="onMapLongPress"
+    style="width:100%;height:100%"></map>
+
+  <!-- ── Map controls (zoom + locate) ── -->
+  <view class="map-controls">
+    <view class="map-ctrl-btn {{isLocating?'locating':''}}" bindtap="locateUser">
+      {{isLocating?'📍':'⊙'}}
+    </view>
+    <view class="map-ctrl-btn" bindtap="zoomIn">+</view>
+    <view class="map-ctrl-btn" bindtap="zoomOut">−</view>
+  </view>
+
+  <!-- ── Tile switcher ── -->
+  <view class="tile-switcher">
+    <view wx:for="{{tileOptions}}" wx:key="key"
+      class="tile-btn {{activeTile===item.key?'on':''}}"
+      bindtap="switchTile"
+      data-tile="{{item.key}}">
+      {{item.label}}
+    </view>
+  </view>
+
+  <!-- ── Nearby Alert Sheet (THE CORE FEATURE!) ── -->
+  <view class="nearby-sheet {{nearbyAlerts.length>0&&!nearbyDismissed?'show':''}}">
+    <view class="nearby-header">
+      <view>
+        <text class="nearby-title">📍 附近发现</text>
+        <text class="nearby-count">{{nearbyAlerts.length}} 个收藏地点</text>
+      </view>
+      <view class="nearby-close" bindtap="dismissNearby">✕</view>
+    </view>
+    <view wx:for="{{nearbyAlerts}}" wx:key="id" class="nearby-item"
+      bindtap="goToNearby" data-id="{{item.id}}"
+      data-lat="{{item.gcjLat}}" data-lng="{{item.gcjLng}}">
+      <view class="nearby-item-icon"
+        style="background:{{item.catColor}}20;color:{{item.catColor}}">
+        {{item.catIcon}}
+      </view>
+      <view class="nearby-item-info">
+        <view class="nearby-item-name">{{item.name}}</view>
+        <view class="nearby-item-dist">{{item.distanceText}} · {{item.walkTimeText}}</view>
+      </view>
+      <view class="nearby-item-go">前往</view>
+    </view>
+  </view>
+
+  <!-- ── Add place modal (triggered by long-press) ── -->
+  <view class="add-overlay" wx:if="{{showAddModal}}" bindtap="cancelAdd">
+    <view class="add-modal" catchtap="">
+      <view class="add-modal-title">在此添加地点？</view>
+      <view class="add-modal-coord">{{addLat}}, {{addLng}}</view>
+      <view style="display:flex;gap:10px;margin-top:16px">
+        <view class="btn btn-dark" style="flex:1" bindtap="cancelAdd">取消</view>
+        <view class="btn btn-green" style="flex:1" bindtap="confirmAdd">添加</view>
+      </view>
+    </view>
+  </view>
+</view>
